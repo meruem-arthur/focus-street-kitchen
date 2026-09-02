@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { getDashboardStats, listOrders } from "@/server/orders";
+import { getDashboardStats, listOrders } from "@/functions/orders";
 
 export const Route = createFileRoute("/admin/_authed/")({
   head: () => ({ meta: [{ title: "Dashboard — FOCUS Staff" }, { name: "robots", content: "noindex" }] }),

@@ -1,9 +1,9 @@
 import * as React from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useCart } from "@/lib/cart-context";
-import { createOrder } from "@/server/orders";
-import { initializePayment } from "@/server/payments";
-import { getDeliveryFeeFn } from "@/server/settings";
+import { createOrder } from "@/functions/orders";
+import { initializePayment } from "@/functions/payments";
+import { getDeliveryFeeFn } from "@/functions/settings";
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({

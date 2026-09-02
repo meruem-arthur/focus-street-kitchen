@@ -1,8 +1,8 @@
 import * as React from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getOrderByToken } from "@/server/orders";
-import { verifyPaymentFn } from "@/server/payments";
+import { getOrderByToken } from "@/functions/orders";
+import { verifyPaymentFn } from "@/functions/payments";
 
 export const Route = createFileRoute("/order/$token")({
   head: () => ({

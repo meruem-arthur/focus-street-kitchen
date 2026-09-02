@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, redirect, Link, useNavigate, useRouter } from "@tanstack/react-router";
-import { getCurrentStaff, logoutStaff } from "@/server/auth";
+import { getCurrentStaff, logoutStaff } from "@/functions/auth";
 
 export const Route = createFileRoute("/admin/_authed")({
   beforeLoad: async () => {

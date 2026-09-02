@@ -1,7 +1,7 @@
 import * as React from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import heroSpread from "@/assets/hero-spread.jpg";
-import { getMenu, type PublicCategory, type PublicMenuItem } from "@/server/menu";
+import { getMenu, type PublicCategory, type PublicMenuItem } from "@/functions/menu";
 import { useCart } from "@/lib/cart-context";
 import { CartSheet } from "@/components/cart-sheet";
 

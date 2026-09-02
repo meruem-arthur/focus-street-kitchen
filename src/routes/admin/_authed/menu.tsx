@@ -1,8 +1,8 @@
 import * as React from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getMenu } from "@/server/menu";
-import { saveMenuItem, setItemAvailability } from "@/server/menu";
+import { getMenu } from "@/functions/menu";
+import { saveMenuItem, setItemAvailability } from "@/functions/menu";
 
 export const Route = createFileRoute("/admin/_authed/menu")({
   head: () => ({ meta: [{ title: "Menu — FOCUS Staff" }, { name: "robots", content: "noindex" }] }),

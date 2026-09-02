@@ -1,6 +1,6 @@
 import * as React from "react";
 import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
-import { loginStaff, getCurrentStaff } from "@/server/auth";
+import { loginStaff, getCurrentStaff } from "@/functions/auth";
 
 export const Route = createFileRoute("/admin/login")({
   head: () => ({

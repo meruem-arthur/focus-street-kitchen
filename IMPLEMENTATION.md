@@ -12,7 +12,7 @@ source code, not a mock, but you should expect a normal amount of first-run debu
 
 - **Database schema** (Drizzle ORM, `src/db/schema.ts`): staff, categories, menu_items,
   orders, order_items, payments, order_status_history, settings.
-- **Menu**: DB-backed (`src/server/menu.ts`), seeded from `src/data/menu-seed.ts` (your
+- **Menu**: DB-backed (`src/functions/menu.ts`), seeded from `src/data/menu-seed.ts` (your
   existing menu content, moved here). Storefront (`src/routes/index.tsx`) now loads it
   server-side and shows "Unavailable" + disables ordering for out-of-stock items.
 - **Cart**: client-side context (`src/lib/cart-context.tsx`), persisted to localStorage for
@@ -21,18 +21,18 @@ source code, not a mock, but you should expect a normal amount of first-run debu
   cart summary once you've added something.
 - **Checkout** (`src/routes/checkout.tsx`): customer details, pickup/delivery, delivery
   address, order summary, submit-guard against double submission.
-- **Order creation** (`src/server/orders.ts`): re-fetches every price from the database
+- **Order creation** (`src/functions/orders.ts`): re-fetches every price from the database
   server-side (never trusts the browser), validates availability, computes subtotal/delivery
   fee/total server-side, generates a sequential `FOC-XXXX` order number, writes the order +
   line items + a status-history row.
-- **Payments** (`src/server/payments.ts`): initializes a real Paystack transaction server-side,
+- **Payments** (`src/functions/payments.ts`): initializes a real Paystack transaction server-side,
   redirects the customer to Paystack, verifies on return, and a webhook
   (`src/routes/api/paystack/webhook.ts`) independently verifies the signature and applies the
   result — treated as the source of truth, idempotent against retries/duplicates.
 - **Order tracking** (`src/routes/order.$token.tsx`): public page reachable only via an
   unguessable per-order token (never a raw database id), polls every 15s for live status.
 - **Staff auth**: email/password login, bcrypt-hashed passwords, signed HTTP-only session
-  cookie (`src/lib/session.ts`, `src/server/auth.ts`). No staff sign-up UI — accounts are
+  cookie (`src/lib/session.ts`, `src/functions/auth.ts`). No staff sign-up UI — accounts are
   created via the seed script.
 - **Staff dashboard** (`/admin`): today's order counts and sales, computed live from the DB.
 - **Staff orders**: `/admin/orders` (filterable history) and `/admin/orders/:id` (full detail
@@ -124,7 +124,7 @@ I couldn't test any of this, so please treat these as the first things to check:
   docs for your exact version. The verification/signature logic inside the handler doesn't
   need to change, just the route export wrapper if the API differs.
 - **Cookie helpers**: `getCookie`/`setCookie`/`deleteCookie` from `@tanstack/react-start/server`
-  in `src/server/auth.ts` — same version caveat as above.
+  in `src/functions/auth.ts` — same version caveat as above.
 - **Realtime**: implemented as polling (dashboard every 20s, active orders every 15s, customer
   tracking every 15s) rather than websockets/SSE, per the brief's fallback allowance. Fine for
   a single-location kiosk operation; revisit if order volume grows.
