@@ -1,4 +1,4 @@
-import { createServerFn } from "@tanstack/react-start";
+import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { getCookie, setCookie, deleteCookie } from "@tanstack/react-start/server";
 import * as bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
@@ -68,7 +68,7 @@ export const getCurrentStaff = createServerFn({ method: "GET" }).handler(async (
  * Throws if there is no valid staff session. Pass `role: "admin"` to
  * additionally require the admin role (e.g. for menu management).
  */
-export async function requireStaff(options?: { role?: "admin" }) {
+export const requireStaff = createServerOnlyFn(async (options?: { role?: "admin" }) => {
   const token = getCookie(SESSION_COOKIE.name);
   const session = verifySessionToken(token);
   if (!session) {
@@ -84,4 +84,4 @@ export async function requireStaff(options?: { role?: "admin" }) {
   }
 
   return account;
-}
+});
