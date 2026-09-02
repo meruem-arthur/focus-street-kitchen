@@ -1,0 +1,246 @@
+import {
+  pgTable,
+  serial,
+  text,
+  varchar,
+  integer,
+  numeric,
+  boolean,
+  timestamp,
+  pgEnum,
+} from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
+
+// ─────────────────────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────────────────────
+
+export const staffRoleEnum = pgEnum("staff_role", ["admin", "staff"]);
+
+export const orderTypeEnum = pgEnum("order_type", ["pickup", "delivery"]);
+
+export const paymentStatusEnum = pgEnum("payment_status", [
+  "pending",
+  "paid",
+  "failed",
+  "refunded",
+]);
+
+export const orderStatusEnum = pgEnum("order_status", [
+  "pending",
+  "accepted",
+  "preparing",
+  "ready",
+  "out_for_delivery",
+  "completed",
+  "cancelled",
+]);
+
+export const paymentProviderEnum = pgEnum("payment_provider", ["paystack", "cash"]);
+
+// ─────────────────────────────────────────────────────────────
+// Staff / Users
+// ─────────────────────────────────────────────────────────────
+
+export const staff = pgTable("staff", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 120 }).notNull(),
+  email: varchar("email", { length: 200 }).notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  role: staffRoleEnum("role").notNull().default("staff"),
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ─────────────────────────────────────────────────────────────
+// Categories
+// ─────────────────────────────────────────────────────────────
+
+export const categories = pgTable("categories", {
+  id: serial("id").primaryKey(),
+  // stable slug used by the frontend, e.g. "special", "banku"
+  slug: varchar("slug", { length: 60 }).notNull().unique(),
+  title: varchar("title", { length: 120 }).notNull(),
+  blurb: text("blurb"),
+  // display layout hint the existing frontend uses: list | grid | triple
+  layout: varchar("layout", { length: 20 }).notNull().default("list"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ─────────────────────────────────────────────────────────────
+// Menu Items
+// ─────────────────────────────────────────────────────────────
+
+export const menuItems = pgTable("menu_items", {
+  id: serial("id").primaryKey(),
+  categoryId: integer("category_id")
+    .notNull()
+    .references(() => categories.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 160 }).notNull(),
+  description: text("description"),
+  // stored in GHS as a decimal, e.g. 70.00
+  price: numeric("price", { precision: 10, scale: 2 }).notNull(),
+  imageUrl: text("image_url"),
+  available: boolean("available").notNull().default(true),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ─────────────────────────────────────────────────────────────
+// App Settings (delivery fee etc — editable without a redeploy)
+// ─────────────────────────────────────────────────────────────
+
+export const settings = pgTable("settings", {
+  key: varchar("key", { length: 80 }).primaryKey(),
+  value: text("value").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ─────────────────────────────────────────────────────────────
+// Orders
+// ─────────────────────────────────────────────────────────────
+
+export const orders = pgTable("orders", {
+  id: serial("id").primaryKey(),
+  // human readable, derived from id after insert, e.g. FOC-1048
+  orderNumber: varchar("order_number", { length: 20 }).notNull().unique(),
+  // opaque, unguessable token used for public order-tracking links
+  trackingToken: varchar("tracking_token", { length: 64 }).notNull().unique(),
+
+  customerName: varchar("customer_name", { length: 160 }).notNull(),
+  customerPhone: varchar("customer_phone", { length: 40 }).notNull(),
+  customerEmail: varchar("customer_email", { length: 200 }),
+
+  orderType: orderTypeEnum("order_type").notNull(),
+  deliveryAddress: text("delivery_address"),
+  deliveryNotes: text("delivery_notes"),
+
+  subtotal: numeric("subtotal", { precision: 10, scale: 2 }).notNull(),
+  deliveryFee: numeric("delivery_fee", { precision: 10, scale: 2 }).notNull().default("0"),
+  total: numeric("total", { precision: 10, scale: 2 }).notNull(),
+
+  paymentStatus: paymentStatusEnum("payment_status").notNull().default("pending"),
+  orderStatus: orderStatusEnum("order_status").notNull().default("pending"),
+  paymentReference: varchar("payment_reference", { length: 120 }),
+
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ─────────────────────────────────────────────────────────────
+// Order Items
+// ─────────────────────────────────────────────────────────────
+
+export const orderItems = pgTable("order_items", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id")
+    .notNull()
+    .references(() => orders.id, { onDelete: "cascade" }),
+  menuItemId: integer("menu_item_id").references(() => menuItems.id, {
+    onDelete: "set null",
+  }),
+  // snapshotted at order time so historical orders stay correct
+  // even if the menu item is later renamed, repriced, or deleted
+  itemName: varchar("item_name", { length: 160 }).notNull(),
+  unitPrice: numeric("unit_price", { precision: 10, scale: 2 }).notNull(),
+  quantity: integer("quantity").notNull(),
+  subtotal: numeric("subtotal", { precision: 10, scale: 2 }).notNull(),
+  specialInstructions: text("special_instructions"),
+});
+
+// ─────────────────────────────────────────────────────────────
+// Payments
+// ─────────────────────────────────────────────────────────────
+
+export const payments = pgTable("payments", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id")
+    .notNull()
+    .references(() => orders.id, { onDelete: "cascade" }),
+  provider: paymentProviderEnum("provider").notNull().default("paystack"),
+  reference: varchar("reference", { length: 120 }).notNull().unique(),
+  amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 10 }).notNull().default("GHS"),
+  status: paymentStatusEnum("status").notNull().default("pending"),
+  // raw Paystack payload for the latest event, kept for reconciliation/debugging
+  rawData: text("raw_data"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ─────────────────────────────────────────────────────────────
+// Order Status History
+// ─────────────────────────────────────────────────────────────
+
+export const orderStatusHistory = pgTable("order_status_history", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id")
+    .notNull()
+    .references(() => orders.id, { onDelete: "cascade" }),
+  previousStatus: orderStatusEnum("previous_status"),
+  newStatus: orderStatusEnum("new_status").notNull(),
+  changedByStaffId: integer("changed_by_staff_id").references(() => staff.id, {
+    onDelete: "set null",
+  }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ─────────────────────────────────────────────────────────────
+// Relations (used for Drizzle's relational query API)
+// ─────────────────────────────────────────────────────────────
+
+export const categoriesRelations = relations(categories, ({ many }) => ({
+  items: many(menuItems),
+}));
+
+export const menuItemsRelations = relations(menuItems, ({ one }) => ({
+  category: one(categories, {
+    fields: [menuItems.categoryId],
+    references: [categories.id],
+  }),
+}));
+
+export const ordersRelations = relations(orders, ({ many }) => ({
+  items: many(orderItems),
+  payments: many(payments),
+  statusHistory: many(orderStatusHistory),
+}));
+
+export const orderItemsRelations = relations(orderItems, ({ one }) => ({
+  order: one(orders, { fields: [orderItems.orderId], references: [orders.id] }),
+  menuItem: one(menuItems, { fields: [orderItems.menuItemId], references: [menuItems.id] }),
+}));
+
+export const paymentsRelations = relations(payments, ({ one }) => ({
+  order: one(orders, { fields: [payments.orderId], references: [orders.id] }),
+}));
+
+export const orderStatusHistoryRelations = relations(orderStatusHistory, ({ one }) => ({
+  order: one(orders, { fields: [orderStatusHistory.orderId], references: [orders.id] }),
+  staff: one(staff, { fields: [orderStatusHistory.changedByStaffId], references: [staff.id] }),
+}));
+
+// ─────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────
+
+export type Staff = typeof staff.$inferSelect;
+export type Category = typeof categories.$inferSelect;
+export type MenuItem = typeof menuItems.$inferSelect;
+export type Order = typeof orders.$inferSelect;
+export type OrderItem = typeof orderItems.$inferSelect;
+export type Payment = typeof payments.$inferSelect;
+export type OrderStatusHistoryRow = typeof orderStatusHistory.$inferSelect;
+
+export const ORDER_STATUS_FLOW = [
+  "pending",
+  "accepted",
+  "preparing",
+  "ready",
+  "out_for_delivery",
+  "completed",
+] as const;
