@@ -3,7 +3,7 @@
 // and the admin account is only created if it doesn't already exist.
 
 import "dotenv/config";
-import * as bcrypt from "bcryptjs";
+import bcrypt from "bcryptjs";
 import { eq, and } from "drizzle-orm";
 import { db } from "./client.ts";
 import { categories, menuItems, settings, staff } from "./schema.ts";
