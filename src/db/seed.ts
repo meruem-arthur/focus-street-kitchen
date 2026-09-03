@@ -5,9 +5,9 @@
 import "dotenv/config";
 import * as bcrypt from "bcryptjs";
 import { eq, and } from "drizzle-orm";
-import { db } from "./client";
-import { categories, menuItems, settings, staff } from "./schema";
-import { MENU_SEED } from "../data/menu-seed";
+import { db } from "./client.ts";
+import { categories, menuItems, settings, staff } from "./schema.ts";
+import { MENU_SEED } from "../data/menu-seed.ts";
 
 async function seedMenu() {
   for (let i = 0; i < MENU_SEED.length; i++) {

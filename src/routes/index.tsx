@@ -1,9 +1,11 @@
 import * as React from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import heroSpread from "@/assets/hero-spread.jpg";
+import logoIcon from "@/assets/logo-icon.png";
 import { getMenu, type PublicCategory, type PublicMenuItem } from "@/functions/menu";
 import { useCart } from "@/lib/cart-context";
 import { CartSheet } from "@/components/cart-sheet";
+import { getOpenStatus } from "@/lib/hours";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -37,7 +39,20 @@ function categoryFrom(cat: PublicCategory): number | null {
   return Math.min(...cat.items.map((i) => i.price));
 }
 
-type DeliveredDish = { name: string; price: string; desc: string; tint: string; focus: string };
+// Each dish can have its own photo via `image`. To add real photos:
+//   1. Drop a .jpg/.png into src/assets/ (e.g. src/assets/seafood-pizza.jpg)
+//   2. Import it up top: import seafoodPizza from "@/assets/seafood-pizza.jpg";
+//   3. Set it below: { ..., image: seafoodPizza }
+// Until you do, `image` is left unset and every dish falls back to the same
+// hero photo below — that fallback (not a bug) is why they currently look identical.
+type DeliveredDish = {
+  name: string;
+  price: string;
+  desc: string;
+  tint: string;
+  focus: string;
+  image?: string;
+};
 
 const DELIVERED: DeliveredDish[] = [
   {
@@ -202,6 +217,7 @@ function CartBagIcon() {
 function Index() {
   const { menu } = Route.useLoaderData();
   const cart = useCart();
+  const status = getOpenStatus();
 
   return (
     <div className="min-h-screen bg-paper text-ink">
@@ -213,16 +229,19 @@ function Index() {
         <div className="relative px-5 pt-6 pb-7">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="grid size-9 place-items-center rounded-[10px] bg-clay text-paper">
-                <span className="text-base font-semibold leading-none">F</span>
-              </div>
+              <img
+                src={logoIcon}
+                alt="FOCUS Street Kitchen logo"
+                className="size-9 shrink-0 rounded-[10px] object-cover ring-1 ring-black/5"
+              />
               <div className="leading-tight">
                 <p className="text-[15px] font-semibold tracking-tight">FOCUS Street Kitchen</p>
                 <p className="text-[11px] text-ink/50">Takoradi, Ghana</p>
               </div>
             </div>
             <span className="inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-[11px] font-medium ring-1 ring-black/5">
-              <span className="size-1.5 rounded-full bg-sage"></span>Closed · opens 10am
+              <span className={`size-1.5 rounded-full ${status.isOpen ? "bg-sage" : "bg-clay"}`}></span>
+              {status.label}
             </span>
           </div>
 
@@ -305,10 +324,19 @@ function Index() {
                       key={item.id}
                       className="flex items-center justify-between gap-3 rounded-2xl bg-card px-4 py-3.5 ring-1 ring-black/5 transition-transform hover:-translate-y-0.5"
                     >
-                      <div className="min-w-0">
-                        <p className="text-[15px] font-medium">{item.name}</p>
-                        {item.description && <p className="mt-0.5 text-xs text-ink/50">{item.description}</p>}
-                        <p className="mt-1 text-sm font-semibold">{formatGHS(item.price)}</p>
+                      <div className="flex min-w-0 items-center gap-3">
+                        {item.imageUrl && (
+                          <img
+                            src={item.imageUrl}
+                            alt={item.name}
+                            className="size-12 shrink-0 rounded-xl object-cover ring-1 ring-black/5"
+                          />
+                        )}
+                        <div className="min-w-0">
+                          <p className="text-[15px] font-medium">{item.name}</p>
+                          {item.description && <p className="mt-0.5 text-xs text-ink/50">{item.description}</p>}
+                          <p className="mt-1 text-sm font-semibold">{formatGHS(item.price)}</p>
+                        </div>
                       </div>
                       <AddToCartControl item={item} />
                     </div>
@@ -320,6 +348,13 @@ function Index() {
                 <div className="mt-4 grid grid-cols-2 gap-3">
                   {cat.items.map((item) => (
                     <div key={item.id} className="rounded-2xl bg-card px-4 py-3 ring-1 ring-black/5">
+                      {item.imageUrl && (
+                        <img
+                          src={item.imageUrl}
+                          alt={item.name}
+                          className="mb-2 aspect-[4/3] w-full rounded-xl object-cover ring-1 ring-black/5"
+                        />
+                      )}
                       <p className="text-sm font-medium">{item.name}</p>
                       {item.description && <p className="mt-0.5 text-xs text-ink/50">{item.description}</p>}
                       <div className="mt-1.5 flex items-center justify-between gap-2">
@@ -393,7 +428,7 @@ function Index() {
               >
                 <div className="relative size-24 shrink-0 overflow-hidden rounded-2xl ring-1 ring-black/5">
                   <img
-                    src={heroSpread}
+                    src={dish.image ?? heroSpread}
                     alt={dish.name}
                     className="size-full object-cover"
                     style={{ objectPosition: dish.focus }}
@@ -464,9 +499,9 @@ function Index() {
           </p>
 
           <div className="mt-4 flex items-center gap-2 text-xs text-ink/60">
-            <span className="size-1.5 rounded-full bg-sage"></span>
+            <span className={`size-1.5 rounded-full ${status.isOpen ? "bg-sage" : "bg-clay"}`}></span>
             <span className="font-medium">Today</span>
-            <span>Opens 10:00am</span>
+            <span>{status.label}</span>
           </div>
 
           <div className="mt-4 grid grid-cols-2 gap-3">
