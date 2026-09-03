@@ -98,6 +98,77 @@
   }
 }
 
+/*
+ * Glassy / glossy button treatment — used across the admin & staff
+ * dashboards (login, staff management, order actions, etc). Layers a
+ * soft gradient sheen + inner highlight + backdrop blur over a
+ * translucent tint of the button's own background color, so it reads
+ * as frosted glass rather than a flat fill.
+ */
+.btn-glass {
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  background-image: linear-gradient(
+    to bottom,
+    color-mix(in oklch, white 22%, transparent),
+    color-mix(in oklch, white 0%, transparent) 55%
+  );
+  box-shadow:
+    0 1px 0 0 color-mix(in oklch, white 35%, transparent) inset,
+    0 -1px 0 0 color-mix(in oklch, black 12%, transparent) inset,
+    0 8px 20px -8px color-mix(in oklch, var(--ink) 35%, transparent);
+  border: 1px solid color-mix(in oklch, white 25%, transparent);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    filter 0.15s ease;
+}
+.btn-glass:hover {
+  filter: brightness(1.06);
+}
+.btn-glass:active {
+  transform: translateY(1px) scale(0.99);
+}
+.btn-glass::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    115deg,
+    transparent 0%,
+    color-mix(in oklch, white 35%, transparent) 45%,
+    transparent 60%
+  );
+  opacity: 0.5;
+  pointer-events: none;
+}
+.btn-glass:disabled {
+  filter: grayscale(0.2);
+}
+
+/* Lighter variant for buttons sitting on a translucent/light card, e.g.
+   secondary or outline-style actions in the admin UI. */
+.btn-glass-light {
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background-color: color-mix(in oklch, white 55%, transparent);
+  box-shadow:
+    0 1px 0 0 color-mix(in oklch, white 60%, transparent) inset,
+    0 4px 14px -8px color-mix(in oklch, var(--ink) 25%, transparent);
+  border: 1px solid color-mix(in oklch, white 40%, transparent);
+  transition: filter 0.15s ease, transform 0.15s ease;
+}
+.btn-glass-light:hover {
+  filter: brightness(1.03);
+}
+.btn-glass-light:active {
+  transform: translateY(1px) scale(0.99);
+}
+
 @keyframes steam {
   0% { transform: translateY(8px); opacity: 0; }
   40% { opacity: 0.55; }

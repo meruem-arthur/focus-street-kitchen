@@ -142,7 +142,7 @@ function OrderDetailPage() {
               <button
                 onClick={() => moveTo(nextStatus)}
                 disabled={updating}
-                className="rounded-full bg-clay px-4 py-2 text-xs font-medium text-paper disabled:opacity-60"
+                className="btn-glass rounded-full bg-clay px-4 py-2 text-xs font-medium text-paper disabled:opacity-60"
               >
                 Mark as {nextStatus.replace(/_/g, " ")}
               </button>
@@ -150,7 +150,7 @@ function OrderDetailPage() {
             <button
               onClick={() => moveTo("cancelled")}
               disabled={updating}
-              className="rounded-full bg-red-50 px-4 py-2 text-xs font-medium text-red-700 disabled:opacity-60"
+              className="btn-glass-light rounded-full px-4 py-2 text-xs font-medium text-red-700 disabled:opacity-60"
             >
               Cancel order
             </button>

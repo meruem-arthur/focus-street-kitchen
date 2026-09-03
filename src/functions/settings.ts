@@ -18,7 +18,7 @@ export const getDeliveryFeeFn = createServerFn({ method: "GET" }).handler(async 
 export const setDeliveryFee = createServerFn({ method: "POST" })
   .validator(z.object({ fee: z.number().nonnegative() }))
   .handler(async ({ data }) => {
-    await requireStaff({ role: "admin" });
+    await requireStaff({ role: ["admin", "super_admin"] });
     await db
       .insert(settings)
       .values({ key: "delivery_fee", value: data.fee.toFixed(2) })

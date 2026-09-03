@@ -15,7 +15,7 @@ import { relations } from "drizzle-orm";
 // Enums
 // ─────────────────────────────────────────────────────────────
 
-export const staffRoleEnum = pgEnum("staff_role", ["admin", "staff"]);
+export const staffRoleEnum = pgEnum("staff_role", ["super_admin", "admin", "staff"]);
 
 export const orderTypeEnum = pgEnum("order_type", ["pickup", "delivery"]);
 
@@ -45,10 +45,67 @@ export const paymentProviderEnum = pgEnum("payment_provider", ["paystack", "cash
 export const staff = pgTable("staff", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 120 }).notNull(),
-  email: varchar("email", { length: 200 }).notNull().unique(),
+  // Email is required for super_admin/admin (used for password-reset flows).
+  // Staff accounts log in by username instead and may not have an email.
+  email: varchar("email", { length: 200 }).unique(),
+  // Staff accounts log in by username. Admin/super_admin may also have one,
+  // but they primarily authenticate with email.
+  username: varchar("username", { length: 60 }).unique(),
   passwordHash: text("password_hash").notNull(),
   role: staffRoleEnum("role").notNull().default("staff"),
   active: boolean("active").notNull().default(true),
+  // Who created this account (Super Admin creates Admins, Admin creates Staff).
+  // Null for the first bootstrapped account.
+  createdByStaffId: integer("created_by_staff_id"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ─────────────────────────────────────────────────────────────
+// Password reset tokens (Admin / Super Admin self-service recovery)
+// ─────────────────────────────────────────────────────────────
+
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: serial("id").primaryKey(),
+  staffId: integer("staff_id")
+    .notNull()
+    .references(() => staff.id, { onDelete: "cascade" }),
+  // We only ever store a hash of the token, never the raw value.
+  tokenHash: varchar("token_hash", { length: 128 }).notNull().unique(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  usedAt: timestamp("used_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ─────────────────────────────────────────────────────────────
+// Activity log (who did what, for accountability across staff)
+// ─────────────────────────────────────────────────────────────
+
+export const activityLog = pgTable("activity_log", {
+  id: serial("id").primaryKey(),
+  staffId: integer("staff_id").references(() => staff.id, { onDelete: "set null" }),
+  // Snapshotted so the log stays readable even if the account is later renamed/deleted.
+  staffName: varchar("staff_name", { length: 120 }).notNull(),
+  staffRole: staffRoleEnum("staff_role").notNull(),
+  action: varchar("action", { length: 200 }).notNull(),
+  entityType: varchar("entity_type", { length: 40 }),
+  entityId: varchar("entity_id", { length: 40 }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ─────────────────────────────────────────────────────────────
+// Promotions
+// ─────────────────────────────────────────────────────────────
+
+export const promotions = pgTable("promotions", {
+  id: serial("id").primaryKey(),
+  title: varchar("title", { length: 160 }).notNull(),
+  description: text("description"),
+  // Short badge shown on the storefront, e.g. "Friday Game Day — 15% off"
+  badgeText: varchar("badge_text", { length: 120 }),
+  active: boolean("active").notNull().default(true),
+  startDate: timestamp("start_date", { withTimezone: true }),
+  endDate: timestamp("end_date", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -224,6 +281,14 @@ export const orderStatusHistoryRelations = relations(orderStatusHistory, ({ one 
   staff: one(staff, { fields: [orderStatusHistory.changedByStaffId], references: [staff.id] }),
 }));
 
+export const passwordResetTokensRelations = relations(passwordResetTokens, ({ one }) => ({
+  staff: one(staff, { fields: [passwordResetTokens.staffId], references: [staff.id] }),
+}));
+
+export const activityLogRelations = relations(activityLog, ({ one }) => ({
+  staff: one(staff, { fields: [activityLog.staffId], references: [staff.id] }),
+}));
+
 // ─────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────
@@ -235,6 +300,12 @@ export type Order = typeof orders.$inferSelect;
 export type OrderItem = typeof orderItems.$inferSelect;
 export type Payment = typeof payments.$inferSelect;
 export type OrderStatusHistoryRow = typeof orderStatusHistory.$inferSelect;
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
+export type ActivityLogRow = typeof activityLog.$inferSelect;
+export type Promotion = typeof promotions.$inferSelect;
+
+export const STAFF_ROLES = ["super_admin", "admin", "staff"] as const;
+export type StaffRole = (typeof STAFF_ROLES)[number];
 
 export const ORDER_STATUS_FLOW = [
   "pending",

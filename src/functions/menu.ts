@@ -4,6 +4,11 @@ import { z } from "zod";
 import { db } from "@/db/client";
 import { categories, menuItems } from "@/db/schema";
 import { requireStaff } from "./auth";
+import { logActivity } from "@/lib/activity-log";
+
+// Menu management is platform/business content — both Admin and Super
+// Admin may manage it. Staff (operational role) may not.
+const MENU_MANAGER_ROLES = ["admin", "super_admin"] as const;
 
 export type PublicMenuItem = {
   id: number;
@@ -68,7 +73,7 @@ const upsertItemSchema = z.object({
 export const saveMenuItem = createServerFn({ method: "POST" })
   .validator(upsertItemSchema)
   .handler(async ({ data }) => {
-    await requireStaff({ role: "admin" });
+    const account = await requireStaff({ role: MENU_MANAGER_ROLES });
 
     if (data.id) {
       await db
@@ -83,6 +88,15 @@ export const saveMenuItem = createServerFn({ method: "POST" })
           updatedAt: new Date(),
         })
         .where(eq(menuItems.id, data.id));
+
+      await logActivity({
+        staffId: account.id,
+        staffName: account.name,
+        staffRole: account.role,
+        action: `Updated menu item "${data.name}"`,
+        entityType: "menu_item",
+        entityId: data.id,
+      });
       return { id: data.id };
     }
 
@@ -98,24 +112,132 @@ export const saveMenuItem = createServerFn({ method: "POST" })
       })
       .returning({ id: menuItems.id });
 
+    await logActivity({
+      staffId: account.id,
+      staffName: account.name,
+      staffRole: account.role,
+      action: `Created menu item "${data.name}"`,
+      entityType: "menu_item",
+      entityId: inserted.id,
+    });
+
     return { id: inserted.id };
   });
 
 export const setItemAvailability = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.number(), available: z.boolean() }))
   .handler(async ({ data }) => {
-    await requireStaff();
+    const account = await requireStaff({ role: MENU_MANAGER_ROLES });
     await db
       .update(menuItems)
       .set({ available: data.available, updatedAt: new Date() })
       .where(eq(menuItems.id, data.id));
+
+    await logActivity({
+      staffId: account.id,
+      staffName: account.name,
+      staffRole: account.role,
+      action: `Marked menu item #${data.id} as ${data.available ? "available" : "unavailable"}`,
+      entityType: "menu_item",
+      entityId: data.id,
+    });
     return { success: true };
   });
 
 export const deleteMenuItem = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.number() }))
   .handler(async ({ data }) => {
-    await requireStaff({ role: "admin" });
+    const account = await requireStaff({ role: MENU_MANAGER_ROLES });
     await db.delete(menuItems).where(eq(menuItems.id, data.id));
+
+    await logActivity({
+      staffId: account.id,
+      staffName: account.name,
+      staffRole: account.role,
+      action: `Deleted menu item #${data.id}`,
+      entityType: "menu_item",
+      entityId: data.id,
+    });
+    return { success: true };
+  });
+
+// ─────────────────────────────────────────────────────────────
+// Category management (Admin + Super Admin)
+// ─────────────────────────────────────────────────────────────
+
+const saveCategorySchema = z.object({
+  id: z.number().optional(),
+  slug: z.string().min(1).max(60),
+  title: z.string().min(1).max(120),
+  blurb: z.string().optional().nullable(),
+  layout: z.enum(["list", "grid", "triple"]).default("list"),
+  sortOrder: z.number().default(0),
+});
+
+export const saveCategory = createServerFn({ method: "POST" })
+  .validator(saveCategorySchema)
+  .handler(async ({ data }) => {
+    const account = await requireStaff({ role: MENU_MANAGER_ROLES });
+
+    if (data.id) {
+      await db
+        .update(categories)
+        .set({
+          slug: data.slug,
+          title: data.title,
+          blurb: data.blurb ?? null,
+          layout: data.layout,
+          sortOrder: data.sortOrder,
+          updatedAt: new Date(),
+        })
+        .where(eq(categories.id, data.id));
+
+      await logActivity({
+        staffId: account.id,
+        staffName: account.name,
+        staffRole: account.role,
+        action: `Updated category "${data.title}"`,
+        entityType: "category",
+        entityId: data.id,
+      });
+      return { id: data.id };
+    }
+
+    const [inserted] = await db
+      .insert(categories)
+      .values({
+        slug: data.slug,
+        title: data.title,
+        blurb: data.blurb ?? null,
+        layout: data.layout,
+        sortOrder: data.sortOrder,
+      })
+      .returning({ id: categories.id });
+
+    await logActivity({
+      staffId: account.id,
+      staffName: account.name,
+      staffRole: account.role,
+      action: `Created category "${data.title}"`,
+      entityType: "category",
+      entityId: inserted.id,
+    });
+    return { id: inserted.id };
+  });
+
+export const deleteCategory = createServerFn({ method: "POST" })
+  .validator(z.object({ id: z.number() }))
+  .handler(async ({ data }) => {
+    const account = await requireStaff({ role: MENU_MANAGER_ROLES });
+    await db.delete(categories).where(eq(categories.id, data.id));
+
+    await logActivity({
+      staffId: account.id,
+      staffName: account.name,
+      staffRole: account.role,
+      action: `Deleted category #${data.id}`,
+      entityType: "category",
+      entityId: data.id,
+    });
     return { success: true };
   });

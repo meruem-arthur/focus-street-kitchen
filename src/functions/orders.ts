@@ -6,6 +6,12 @@ import { db } from "@/db/client";
 import { menuItems, orders, orderItems, orderStatusHistory, ORDER_STATUS_FLOW } from "@/db/schema";
 import { requireStaff } from "./auth";
 import { getDeliveryFee } from "./settings";
+import { logActivity } from "@/lib/activity-log";
+
+// Orders are day-to-day business/financial data. Super Admin is
+// intentionally excluded from every function below — only Admin and
+// Staff (the operational roles) may see or touch order data.
+const OPERATIONAL_ROLES = ["admin", "staff"] as const;
 
 // ─────────────────────────────────────────────────────────────
 // Create order (customer)
@@ -178,7 +184,7 @@ const listOrdersSchema = z.object({
 export const listOrders = createServerFn({ method: "GET" })
   .validator(listOrdersSchema)
   .handler(async ({ data }) => {
-    await requireStaff();
+    await requireStaff({ role: OPERATIONAL_ROLES });
 
     const conditions = [];
     if (data.status) conditions.push(eq(orders.orderStatus, data.status));
@@ -211,7 +217,7 @@ export const listOrders = createServerFn({ method: "GET" })
 export const getOrderById = createServerFn({ method: "GET" })
   .validator(z.object({ id: z.number() }))
   .handler(async ({ data }) => {
-    await requireStaff();
+    await requireStaff({ role: OPERATIONAL_ROLES });
 
     const order = await db.query.orders.findFirst({
       where: eq(orders.id, data.id),
@@ -250,7 +256,7 @@ function isValidTransition(current: string, next: string): boolean {
 export const updateOrderStatus = createServerFn({ method: "POST" })
   .validator(updateStatusSchema)
   .handler(async ({ data }) => {
-    const account = await requireStaff();
+    const account = await requireStaff({ role: OPERATIONAL_ROLES });
 
     const order = await db.query.orders.findFirst({ where: eq(orders.id, data.orderId) });
     if (!order) throw new Error("Order not found.");
@@ -271,11 +277,20 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
       changedByStaffId: account.id,
     });
 
+    await logActivity({
+      staffId: account.id,
+      staffName: account.name,
+      staffRole: account.role,
+      action: `Marked order ${order.orderNumber} as "${data.newStatus}"`,
+      entityType: "order",
+      entityId: order.orderNumber,
+    });
+
     return { success: true };
   });
 
 export const getDashboardStats = createServerFn({ method: "GET" }).handler(async () => {
-  await requireStaff();
+  await requireStaff({ role: OPERATIONAL_ROLES });
 
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
@@ -284,15 +299,20 @@ export const getDashboardStats = createServerFn({ method: "GET" }).handler(async
     where: gte(orders.createdAt, startOfToday),
   });
 
+  const paidToday = todayOrders.filter((o) => o.paymentStatus === "paid");
+  const todaySales = paidToday.reduce((sum, o) => sum + Number(o.total), 0);
+
   const stats = {
     todayOrders: todayOrders.length,
     pending: todayOrders.filter((o) => o.orderStatus === "pending").length,
+    accepted: todayOrders.filter((o) => o.orderStatus === "accepted").length,
     preparing: todayOrders.filter((o) => o.orderStatus === "preparing").length,
     ready: todayOrders.filter((o) => o.orderStatus === "ready").length,
+    outForDelivery: todayOrders.filter((o) => o.orderStatus === "out_for_delivery").length,
     completed: todayOrders.filter((o) => o.orderStatus === "completed").length,
-    todaySales: todayOrders
-      .filter((o) => o.paymentStatus === "paid")
-      .reduce((sum, o) => sum + Number(o.total), 0),
+    cancelled: todayOrders.filter((o) => o.orderStatus === "cancelled").length,
+    todaySales,
+    averageOrderValue: paidToday.length > 0 ? todaySales / paidToday.length : 0,
   };
 
   return stats;

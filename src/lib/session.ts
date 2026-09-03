@@ -5,7 +5,7 @@ const MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 7 days
 
 export type SessionPayload = {
   staffId: number;
-  role: "admin" | "staff";
+  role: "super_admin" | "admin" | "staff";
 };
 
 function getSecret(): string {
@@ -41,7 +41,9 @@ export function verifySessionToken(token: string | undefined | null): SessionPay
   try {
     const payload = JSON.parse(Buffer.from(body, "base64url").toString("utf8"));
     if (typeof payload?.staffId !== "number") return null;
-    if (payload.role !== "admin" && payload.role !== "staff") return null;
+    if (payload.role !== "super_admin" && payload.role !== "admin" && payload.role !== "staff") {
+      return null;
+    }
     return payload as SessionPayload;
   } catch {
     return null;

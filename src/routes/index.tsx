@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import heroSpread from "@/assets/hero-spread.jpg";
 import logoIcon from "@/assets/logo-icon.png";
 import { getMenu, type PublicCategory, type PublicMenuItem } from "@/functions/menu";
+import { getActivePromotions } from "@/functions/promotions";
 import { useCart } from "@/lib/cart-context";
 import { CartSheet } from "@/components/cart-sheet";
 import { getOpenStatus } from "@/lib/hours";
@@ -26,7 +27,10 @@ export const Route = createFileRoute("/")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  loader: async () => ({ menu: await getMenu() }),
+  loader: async () => ({
+    menu: await getMenu(),
+    promotions: await getActivePromotions(),
+  }),
   component: Index,
 });
 
@@ -215,7 +219,7 @@ function CartBagIcon() {
 }
 
 function Index() {
-  const { menu } = Route.useLoaderData();
+  const { menu, promotions } = Route.useLoaderData();
   const cart = useCart();
   const status = getOpenStatus();
 
@@ -382,6 +386,30 @@ function Index() {
             </section>
           );
         })}
+
+        {/* ADMIN-MANAGED PROMOTIONS — anything created in the Admin/Super
+            Admin dashboard shows up here automatically while active. This
+            is separate from the hand-built Friday promo card below. */}
+        {promotions.length > 0 && (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {promotions.map((promo: (typeof promotions)[number]) => (
+              <div
+                key={promo.id}
+                className="rounded-[24px] bg-card p-5 ring-1 ring-black/5"
+              >
+                {promo.badgeText && (
+                  <span className="inline-block rounded-full bg-clay/10 px-2.5 py-1 text-[11px] font-medium text-clay">
+                    {promo.badgeText}
+                  </span>
+                )}
+                <h3 className="mt-2 text-lg font-semibold">{promo.title}</h3>
+                {promo.description && (
+                  <p className="mt-1 text-sm text-ink/60">{promo.description}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* FRIDAY PROMO — coupon ticket */}
         <section className="relative isolate flex overflow-hidden rounded-[28px] bg-gradient-to-br from-clay to-amber text-paper ring-1 ring-black/5">

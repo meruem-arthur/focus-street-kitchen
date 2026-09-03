@@ -35,17 +35,28 @@ function DashboardPage() {
   });
 
   const stats = statsQuery.data;
-  const orders = (activeOrdersQuery.data ?? []).filter((o) => o.orderStatus !== "completed" && o.orderStatus !== "cancelled");
+  const orders = (activeOrdersQuery.data ?? []).filter(
+    (o) => o.orderStatus !== "completed" && o.orderStatus !== "cancelled",
+  );
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-3 gap-2">
-        <StatCard label="Today's Orders" value={stats?.todayOrders ?? "—"} />
-        <StatCard label="Pending" value={stats?.pending ?? "—"} />
-        <StatCard label="Preparing" value={stats?.preparing ?? "—"} />
-        <StatCard label="Ready" value={stats?.ready ?? "—"} />
-        <StatCard label="Completed" value={stats?.completed ?? "—"} />
-        <StatCard label="Today's Sales" value={stats ? formatGHS(stats.todaySales) : "—"} />
+      <div>
+        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink/50">
+          Today's Overview
+        </h2>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+          <StatCard label="Today's Sales" value={stats ? formatGHS(stats.todaySales) : "—"} highlight />
+          <StatCard label="Orders Today" value={stats?.todayOrders ?? "—"} />
+          <StatCard label="Avg Order Value" value={stats ? formatGHS(stats.averageOrderValue) : "—"} />
+          <StatCard label="Pending" value={stats?.pending ?? "—"} />
+          <StatCard label="Accepted" value={stats?.accepted ?? "—"} />
+          <StatCard label="Preparing" value={stats?.preparing ?? "—"} />
+          <StatCard label="Ready" value={stats?.ready ?? "—"} />
+          <StatCard label="Out for Delivery" value={stats?.outForDelivery ?? "—"} />
+          <StatCard label="Completed" value={stats?.completed ?? "—"} />
+          <StatCard label="Cancelled" value={stats?.cancelled ?? "—"} />
+        </div>
       </div>
 
       <div>
@@ -100,11 +111,25 @@ function DashboardPage() {
   );
 }
 
-function StatCard({ label, value }: { label: string; value: string | number }) {
+function StatCard({
+  label,
+  value,
+  highlight,
+}: {
+  label: string;
+  value: string | number;
+  highlight?: boolean;
+}) {
   return (
-    <div className="rounded-2xl bg-card p-3 text-center ring-1 ring-black/5">
+    <div
+      className={`rounded-2xl p-3 text-center ring-1 ring-black/5 ${
+        highlight ? "bg-clay text-paper" : "bg-card"
+      }`}
+    >
       <p className="text-lg font-semibold">{value}</p>
-      <p className="mt-0.5 text-[10px] leading-tight text-ink/50">{label}</p>
+      <p className={`mt-0.5 text-[10px] leading-tight ${highlight ? "text-paper/75" : "text-ink/50"}`}>
+        {label}
+      </p>
     </div>
   );
 }

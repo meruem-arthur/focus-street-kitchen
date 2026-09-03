@@ -108,11 +108,37 @@ async function seedAdmin() {
   console.log(`✓ created admin account (${email})`);
 }
 
+async function seedSuperAdmin() {
+  const email = process.env.SUPER_ADMIN_EMAIL;
+  const password = process.env.SUPER_ADMIN_PASSWORD;
+  const name = process.env.SUPER_ADMIN_NAME ?? "Super Admin";
+
+  if (!email || !password) {
+    console.log(
+      "Skipping super admin account — set SUPER_ADMIN_EMAIL and SUPER_ADMIN_PASSWORD in .env to create one.",
+    );
+    return;
+  }
+
+  const existing = await db.query.staff.findFirst({ where: eq(staff.email, email) });
+  if (existing) {
+    console.log(`✓ super admin account already exists (${email})`);
+    return;
+  }
+
+  const passwordHash = await bcrypt.hash(password, 12);
+  await db
+    .insert(staff)
+    .values({ name, email, passwordHash, role: "super_admin", active: true });
+  console.log(`✓ created super admin account (${email})`);
+}
+
 async function main() {
   console.log("Seeding FOCUS Street Kitchen database…\n");
   await seedMenu();
   await seedSettings();
   await seedAdmin();
+  await seedSuperAdmin();
   console.log("\nDone.");
 }
 
