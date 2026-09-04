@@ -2,6 +2,7 @@ import * as React from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { listOrders } from "@/functions/orders";
+import { orderStatusPhrase } from "@/lib/order-status";
 
 export const Route = createFileRoute("/admin/_authed/orders/")({
   head: () => ({ meta: [{ title: "Orders — FOCUS Staff" }, { name: "robots", content: "noindex" }] }),
@@ -104,7 +105,7 @@ function OrdersHistoryPage() {
                 </span>
               </div>
               <p className="mt-1 text-xs text-ink/50">
-                {o.customerName} · {o.orderType} · {o.orderStatus.replace(/_/g, " ")}
+                {o.customerName} · {o.orderType} · {orderStatusPhrase(o.orderStatus, o.orderType)}
               </p>
               <div className="mt-2 flex items-center justify-between text-sm">
                 <span className="text-ink/60">{o.itemCount} items</span>

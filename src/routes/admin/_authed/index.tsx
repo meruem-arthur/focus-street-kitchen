@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { getDashboardStats, listOrders } from "@/functions/orders";
+import { outForDeliveryStepLabel } from "@/lib/order-status";
 
 export const Route = createFileRoute("/admin/_authed/")({
   head: () => ({ meta: [{ title: "Dashboard — FOCUS Staff" }, { name: "robots", content: "noindex" }] }),
@@ -85,7 +86,9 @@ function DashboardPage() {
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-semibold">{o.orderNumber}</p>
                   <span className="rounded-full bg-clay/10 px-2.5 py-1 text-[11px] font-medium text-clay">
-                    {STATUS_LABEL[o.orderStatus] ?? o.orderStatus}
+                    {o.orderStatus === "out_for_delivery"
+                      ? outForDeliveryStepLabel(o.orderType).replace(/^\w/, (c) => c.toUpperCase())
+                      : (STATUS_LABEL[o.orderStatus] ?? o.orderStatus)}
                   </span>
                 </div>
                 <p className="mt-1 text-xs text-ink/50">

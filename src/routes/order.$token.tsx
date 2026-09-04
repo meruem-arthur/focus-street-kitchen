@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getOrderByToken } from "@/functions/orders";
 import { verifyPaymentFn } from "@/functions/payments";
+import { outForDeliveryStepLabel } from "@/lib/order-status";
 
 export const Route = createFileRoute("/order/$token")({
   head: () => ({
@@ -19,14 +20,21 @@ function formatGHS(amount: number) {
   return `GH₵${amount.toFixed(2)}`;
 }
 
-const STEPS = [
-  { key: "pending", label: "Order Received" },
-  { key: "accepted", label: "Accepted" },
-  { key: "preparing", label: "Preparing" },
-  { key: "ready", label: "Ready" },
-  { key: "out_for_delivery", label: "Out for Delivery" },
-  { key: "completed", label: "Completed" },
-] as const;
+function getSteps(orderType: string) {
+  return [
+    { key: "pending", label: "Order Received" },
+    { key: "accepted", label: "Accepted" },
+    { key: "preparing", label: "Preparing" },
+    { key: "ready", label: "Ready" },
+    {
+      key: "out_for_delivery",
+      // Pickup orders skip the delivery leg entirely — this step just
+      // means the food is ready and waiting for the customer to collect.
+      label: outForDeliveryStepLabel(orderType).replace(/\b\w/g, (c) => c.toUpperCase()),
+    },
+    { key: "completed", label: "Completed" },
+  ] as const;
+}
 
 function OrderTrackingPage() {
   const { token } = Route.useParams();
@@ -69,6 +77,7 @@ function OrderTrackingPage() {
 
   const order = orderQuery.data;
   const isCancelled = order.orderStatus === "cancelled";
+  const STEPS = getSteps(order.orderType);
   const currentIndex = STEPS.findIndex((s) => s.key === order.orderStatus);
 
   return (

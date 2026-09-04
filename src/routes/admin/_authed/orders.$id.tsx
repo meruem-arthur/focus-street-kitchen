@@ -2,6 +2,7 @@ import * as React from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getOrderById, updateOrderStatus } from "@/functions/orders";
+import { orderStatusPhrase } from "@/lib/order-status";
 
 export const Route = createFileRoute("/admin/_authed/orders/$id")({
   head: () => ({ meta: [{ title: "Order — FOCUS Staff" }, { name: "robots", content: "noindex" }] }),
@@ -132,7 +133,9 @@ function OrderDetailPage() {
 
       <div className="rounded-2xl bg-card p-4 ring-1 ring-black/5">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-ink/50">Status</h2>
-        <p className="mt-2 text-sm font-medium capitalize">{order.orderStatus.replace(/_/g, " ")}</p>
+        <p className="mt-2 text-sm font-medium capitalize">
+          {orderStatusPhrase(order.orderStatus, order.orderType)}
+        </p>
 
         {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
 
@@ -144,7 +147,7 @@ function OrderDetailPage() {
                 disabled={updating}
                 className="btn-glass rounded-full bg-clay px-4 py-2 text-xs font-medium text-paper disabled:opacity-60"
               >
-                Mark as {nextStatus.replace(/_/g, " ")}
+                Mark as {orderStatusPhrase(nextStatus, order.orderType)}
               </button>
             )}
             <button
