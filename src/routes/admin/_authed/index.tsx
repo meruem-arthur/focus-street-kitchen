@@ -4,7 +4,9 @@ import { getDashboardStats, listOrders } from "@/functions/orders";
 import { outForDeliveryStepLabel } from "@/lib/order-status";
 
 export const Route = createFileRoute("/admin/_authed/")({
-  head: () => ({ meta: [{ title: "Dashboard — FOCUS Staff" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({
+    meta: [{ title: "Dashboard — FOCUS Staff" }, { name: "robots", content: "noindex" }],
+  }),
   component: DashboardPage,
 });
 
@@ -47,9 +49,16 @@ function DashboardPage() {
           Today's Overview
         </h2>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-          <StatCard label="Today's Sales" value={stats ? formatGHS(stats.todaySales) : "—"} highlight />
+          <StatCard
+            label="Today's Sales"
+            value={stats ? formatGHS(stats.todaySales) : "—"}
+            highlight
+          />
           <StatCard label="Orders Today" value={stats?.todayOrders ?? "—"} />
-          <StatCard label="Avg Order Value" value={stats ? formatGHS(stats.averageOrderValue) : "—"} />
+          <StatCard
+            label="Avg Order Value"
+            value={stats ? formatGHS(stats.averageOrderValue) : "—"}
+          />
           <StatCard label="Pending" value={stats?.pending ?? "—"} />
           <StatCard label="Accepted" value={stats?.accepted ?? "—"} />
           <StatCard label="Preparing" value={stats?.preparing ?? "—"} />
@@ -75,7 +84,7 @@ function DashboardPage() {
         ) : orders.length === 0 ? (
           <p className="mt-3 text-sm text-ink/40">No active orders right now.</p>
         ) : (
-          <div className="mt-3 space-y-2">
+          <div className="mt-3 grid gap-2 lg:grid-cols-2 xl:grid-cols-3">
             {orders.map((o) => (
               <Link
                 key={o.id}
@@ -95,7 +104,9 @@ function DashboardPage() {
                   {o.customerName} · {o.customerPhone} · {o.orderType}
                 </p>
                 <div className="mt-2 flex items-center justify-between text-sm">
-                  <span className="text-ink/60">{o.itemCount} item{o.itemCount === 1 ? "" : "s"}</span>
+                  <span className="text-ink/60">
+                    {o.itemCount} item{o.itemCount === 1 ? "" : "s"}
+                  </span>
                   <span className="font-semibold">{formatGHS(o.total)}</span>
                 </div>
                 <span
@@ -130,7 +141,9 @@ function StatCard({
       }`}
     >
       <p className="text-lg font-semibold">{value}</p>
-      <p className={`mt-0.5 text-[10px] leading-tight ${highlight ? "text-paper/75" : "text-ink/50"}`}>
+      <p
+        className={`mt-0.5 text-[10px] leading-tight ${highlight ? "text-paper/75" : "text-ink/50"}`}
+      >
         {label}
       </p>
     </div>

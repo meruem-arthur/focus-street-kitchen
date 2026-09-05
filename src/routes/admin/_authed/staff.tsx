@@ -12,7 +12,9 @@ import {
 import { PasswordInput } from "@/components/ui/password-input";
 
 export const Route = createFileRoute("/admin/_authed/staff")({
-  head: () => ({ meta: [{ title: "Staff — FOCUS Admin" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({
+    meta: [{ title: "Staff — FOCUS Admin" }, { name: "robots", content: "noindex" }],
+  }),
   beforeLoad: ({ context }) => {
     // Server-side authorization is the real guard (see requireStaff calls in
     // functions/staff.ts) — this is just so Staff never even see the screen.
@@ -23,7 +25,10 @@ export const Route = createFileRoute("/admin/_authed/staff")({
 
 function StaffManagementPage() {
   const queryClient = useQueryClient();
-  const staffQuery = useQuery({ queryKey: ["admin-staff-list"], queryFn: () => listStaffAccounts() });
+  const staffQuery = useQuery({
+    queryKey: ["admin-staff-list"],
+    queryFn: () => listStaffAccounts(),
+  });
 
   const [showAdd, setShowAdd] = React.useState(false);
   const [resetTarget, setResetTarget] = React.useState<{ id: number; name: string } | null>(null);
@@ -78,7 +83,7 @@ function StaffManagementPage() {
       ) : (staffQuery.data ?? []).length === 0 ? (
         <p className="text-sm text-ink/40">No staff accounts yet — add your first one above.</p>
       ) : (
-        <div className="space-y-2">
+        <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-3">
           {staffQuery.data!.map((s) => (
             <div key={s.id} className="rounded-2xl bg-card p-4 ring-1 ring-black/5">
               <div className="flex items-center justify-between">

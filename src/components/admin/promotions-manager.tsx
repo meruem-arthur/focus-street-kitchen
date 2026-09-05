@@ -1,6 +1,11 @@
 import * as React from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { listPromotions, savePromotion, setPromotionActive, deletePromotion } from "@/functions/promotions";
+import {
+  listPromotions,
+  savePromotion,
+  setPromotionActive,
+  deletePromotion,
+} from "@/functions/promotions";
 
 export function PromotionsManager() {
   const queryClient = useQueryClient();
@@ -57,7 +62,7 @@ export function PromotionsManager() {
       ) : (promoQuery.data ?? []).length === 0 ? (
         <p className="text-sm text-ink/40">No promotions yet.</p>
       ) : (
-        <div className="space-y-2">
+        <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-3">
           {promoQuery.data!.map((p) => (
             <div key={p.id} className="rounded-2xl bg-card p-4 ring-1 ring-black/5">
               <div className="flex items-center justify-between">
@@ -73,8 +78,8 @@ export function PromotionsManager() {
               {p.badgeText && <p className="mt-1 text-xs font-medium text-clay">{p.badgeText}</p>}
               {p.description && <p className="mt-1 text-xs text-ink/55">{p.description}</p>}
               <p className="mt-1 text-[11px] text-ink/40">
-                {p.startDate ? new Date(p.startDate).toLocaleDateString("en-GB") : "No start date"} –{" "}
-                {p.endDate ? new Date(p.endDate).toLocaleDateString("en-GB") : "No end date"}
+                {p.startDate ? new Date(p.startDate).toLocaleDateString("en-GB") : "No start date"}{" "}
+                – {p.endDate ? new Date(p.endDate).toLocaleDateString("en-GB") : "No end date"}
               </p>
               <div className="mt-3 flex flex-wrap gap-2 text-xs">
                 <button
@@ -108,7 +113,13 @@ export function PromotionsManager() {
   );
 }
 
-function AddPromotionDialog({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+function AddPromotionDialog({
+  onClose,
+  onCreated,
+}: {
+  onClose: () => void;
+  onCreated: () => void;
+}) {
   const [title, setTitle] = React.useState("");
   const [badgeText, setBadgeText] = React.useState("");
   const [description, setDescription] = React.useState("");

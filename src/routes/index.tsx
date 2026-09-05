@@ -291,7 +291,7 @@ function Index() {
         <div className="pointer-events-none absolute -top-10 -right-16 size-72 rounded-full bg-amber/30 blur-3xl" />
         <div className="pointer-events-none absolute top-24 -left-20 size-56 rounded-full bg-clay/10 blur-3xl" />
 
-        <div className="relative px-5 pt-6 pb-7">
+        <div className="relative px-5 pt-6 pb-7 lg:mx-auto lg:max-w-6xl lg:px-10 lg:pt-8 lg:pb-10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <img
@@ -312,58 +312,64 @@ function Index() {
             </span>
           </div>
 
-          <div className="relative mt-6">
-            <div className="absolute left-1/2 top-6 z-10 -translate-x-1/2">
-              <div className="steam size-2 rounded-full bg-paper/70 blur-[2px]"></div>
-              <div className="steam steam-2 mx-auto mt-3 size-1.5 rounded-full bg-paper/70 blur-[2px]"></div>
-              <div className="steam steam-3 mx-auto mt-2 size-2.5 rounded-full bg-paper/60 blur-[3px]"></div>
+          <div className="lg:mt-10 lg:grid lg:grid-cols-2 lg:items-center lg:gap-14">
+            <div className="lg:order-2">
+              <div className="relative mt-6 lg:mt-0">
+                <div className="absolute left-1/2 top-6 z-10 -translate-x-1/2 lg:hidden">
+                  <div className="steam size-2 rounded-full bg-paper/70 blur-[2px]"></div>
+                  <div className="steam steam-2 mx-auto mt-3 size-1.5 rounded-full bg-paper/70 blur-[2px]"></div>
+                  <div className="steam steam-3 mx-auto mt-2 size-2.5 rounded-full bg-paper/60 blur-[3px]"></div>
+                </div>
+                <img
+                  src={heroSpread}
+                  alt="Golden-hour street food spread of loaded fries, jollof rice and shawarma"
+                  width={1024}
+                  height={768}
+                  className="relative aspect-[4/3] w-full overflow-hidden rounded-[min(6vw,20px)] object-cover shadow-2xl shadow-clay/10 ring-1 ring-black/5"
+                />
+              </div>
             </div>
-            <img
-              src={heroSpread}
-              alt="Golden-hour street food spread of loaded fries, jollof rice and shawarma"
-              width={1024}
-              height={768}
-              className="relative aspect-[4/3] w-full overflow-hidden rounded-[min(6vw,20px)] object-cover ring-1 ring-black/5"
-            />
-          </div>
 
-          <h1 className="mt-6 max-w-[20ch] text-4xl font-medium leading-[1.02] tracking-tight text-balance">
-            Street food, <span className="text-clay">golden-hour</span> hot.
-          </h1>
-          <p className="mt-3 max-w-[42ch] text-sm leading-relaxed text-pretty text-ink/65">
-            Banku, okro, shawarma and loaded fries cooked to order in Takoradi. Dine in, drive
-            through or get it delivered.
-          </p>
+            <div className="lg:order-1">
+              <h1 className="mt-6 max-w-[20ch] text-4xl font-medium leading-[1.02] tracking-tight text-balance lg:mt-0 lg:text-6xl">
+                Street food, <span className="text-clay">golden-hour</span> hot.
+              </h1>
+              <p className="mt-3 max-w-[42ch] text-sm leading-relaxed text-pretty text-ink/65 lg:mt-5 lg:text-base">
+                Banku, okro, shawarma and loaded fries cooked to order in Takoradi. Dine in, drive
+                through or get it delivered.
+              </p>
 
-          <div className="mt-5 flex items-center gap-3">
-            <a
-              href="tel:0592767499"
-              className="btn-glass inline-flex items-center gap-2 rounded-full bg-clay px-5 py-3 text-sm font-medium text-paper ring-1 ring-clay transition-transform hover:-translate-y-0.5"
-            >
-              <PhoneIcon />
-              Order by phone
-            </a>
-            <a
-              href="https://maps.google.com/?q=FOCUS+Street+Kitchen+Takoradi"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-full bg-card px-4 py-3 text-sm font-medium text-ink ring-1 ring-black/5 transition-transform hover:-translate-y-0.5"
-            >
-              <PinIcon />
-              Directions
-            </a>
+              <div className="mt-5 flex items-center gap-3 lg:mt-8">
+                <a
+                  href="tel:0592767499"
+                  className="btn-glass inline-flex items-center gap-2 rounded-full bg-clay px-5 py-3 text-sm font-medium text-paper ring-1 ring-clay transition-transform hover:-translate-y-0.5"
+                >
+                  <PhoneIcon />
+                  Order by phone
+                </a>
+                <a
+                  href="https://maps.google.com/?q=FOCUS+Street+Kitchen+Takoradi"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-full bg-card px-4 py-3 text-sm font-medium text-ink ring-1 ring-black/5 transition-transform hover:-translate-y-0.5"
+                >
+                  <PinIcon />
+                  Directions
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* STICKY CATEGORY NAV */}
       <nav className="sticky top-0 z-30 border-b border-black/5 bg-paper/90 backdrop-blur-sm">
-        <div className="no-scrollbar flex gap-1 overflow-x-auto px-4 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="no-scrollbar flex gap-1 overflow-x-auto px-4 py-3 [scrollbar-width:none] lg:mx-auto lg:max-w-6xl lg:flex-wrap lg:justify-center lg:overflow-visible lg:px-10 [&::-webkit-scrollbar]:hidden">
           {NAV.map((n) => (
             <a
               key={n.id}
               href={`#${n.id}`}
-              className="shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium text-ink/60 transition-colors hover:bg-ink/5 hover:text-ink"
+              className="shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium text-ink/60 transition-colors hover:bg-ink/5 hover:text-ink lg:px-5 lg:text-sm"
             >
               {n.label}
             </a>
@@ -372,7 +378,7 @@ function Index() {
       </nav>
 
       {/* MENU */}
-      <main className="space-y-8 px-5 py-7">
+      <main className="space-y-8 px-5 py-7 lg:mx-auto lg:max-w-6xl lg:px-10 lg:py-10">
         {menu.map((cat) => {
           const from = categoryFrom(cat);
           return (
@@ -388,7 +394,7 @@ function Index() {
               {cat.blurb && <p className="mt-1 text-sm text-pretty text-ink/55">{cat.blurb}</p>}
 
               {cat.layout === "list" && (
-                <div className="mt-4 space-y-3">
+                <div className="mt-4 grid gap-3 lg:grid-cols-2">
                   {cat.items.map((item) => (
                     <div
                       key={item.id}
@@ -417,7 +423,7 @@ function Index() {
               )}
 
               {cat.layout === "grid" && (
-                <div className="mt-4 grid grid-cols-2 gap-3">
+                <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4">
                   {cat.items.map((item) => (
                     <div
                       key={item.id}
@@ -444,7 +450,7 @@ function Index() {
               )}
 
               {cat.layout === "triple" && (
-                <div className="mt-4 grid grid-cols-3 gap-3">
+                <div className="mt-4 grid grid-cols-3 gap-3 lg:grid-cols-5 xl:grid-cols-6">
                   {cat.items.map((item) => (
                     <div
                       key={item.id}
@@ -467,7 +473,7 @@ function Index() {
             Admin dashboard shows up here automatically while active. This
             is separate from the hand-built Friday promo card below. */}
         {promotions.length > 0 && (
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {promotions.map((promo: (typeof promotions)[number]) => (
               <div key={promo.id} className="rounded-[24px] bg-card p-5 ring-1 ring-black/5">
                 {promo.badgeText && (
@@ -526,7 +532,7 @@ function Index() {
             Top picks, cooked to order and out the door fast.
           </p>
 
-          <div className="mt-5 space-y-4">
+          <div className="mt-5 grid gap-4 lg:grid-cols-2">
             {DELIVERED.map((dish) => (
               <div
                 key={dish.name}
@@ -560,7 +566,7 @@ function Index() {
       </main>
 
       {/* WHAT THEY SAY */}
-      <section className="px-5 pb-8">
+      <section className="px-5 pb-8 lg:mx-auto lg:max-w-6xl lg:px-10 lg:pb-12">
         <h2 className="text-center text-2xl font-semibold tracking-tight text-balance">
           <CornerBracket>
             What They <span className="text-clay">Say?</span>
@@ -573,11 +579,11 @@ function Index() {
           <span>· 5 reviews</span>
         </div>
 
-        <div className="no-scrollbar mt-5 flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="no-scrollbar mt-5 flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] lg:grid lg:grid-cols-3 lg:overflow-visible [&::-webkit-scrollbar]:hidden">
           {REVIEWS.map((r) => (
             <div
               key={r.name}
-              className="w-[78%] shrink-0 snap-start rounded-3xl bg-gradient-to-br from-amber/25 via-card to-card p-4 ring-1 ring-black/5 sm:w-[48%]"
+              className="w-[78%] shrink-0 snap-start rounded-3xl bg-gradient-to-br from-amber/25 via-card to-card p-4 ring-1 ring-black/5 sm:w-[48%] lg:w-auto"
             >
               <div className="flex items-center gap-2.5">
                 <div className="grid size-9 shrink-0 place-items-center rounded-full bg-clay/15 text-sm font-semibold text-clay">
@@ -598,7 +604,7 @@ function Index() {
       </section>
 
       {/* CONTACT + HOURS */}
-      <section className="px-5 pb-28">
+      <section className="px-5 pb-28 lg:mx-auto lg:max-w-6xl lg:px-10 lg:pb-16">
         <h2 className="text-2xl font-semibold tracking-tight text-balance">Find us</h2>
         <div className="mt-4 rounded-3xl bg-card p-5 ring-1 ring-black/5">
           <p className="text-sm font-medium">Aberdeen Plaza, Ground Floor</p>
@@ -650,7 +656,7 @@ function Index() {
 
       {/* STICKY ORDER BAR */}
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-black/5 bg-paper/95 backdrop-blur-sm">
-        <div className="flex items-center gap-3 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+        <div className="flex items-center gap-3 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] lg:mx-auto lg:max-w-3xl lg:px-10">
           {cart.itemCount > 0 ? (
             <>
               <div className="leading-tight">
