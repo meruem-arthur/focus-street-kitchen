@@ -25,36 +25,40 @@ export type PublicCategory = {
   title: string;
   blurb: string | null;
   layout: string;
+  sortOrder: number;
   items: PublicMenuItem[];
 };
 
 /** Full menu, grouped by category, for the public site. */
-export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promise<PublicCategory[]> => {
-  const cats = await db.query.categories.findMany({
-    orderBy: asc(categories.sortOrder),
-    with: {
-      items: {
-        orderBy: asc(menuItems.sortOrder),
+export const getMenu = createServerFn({ method: "GET" }).handler(
+  async (): Promise<PublicCategory[]> => {
+    const cats = await db.query.categories.findMany({
+      orderBy: asc(categories.sortOrder),
+      with: {
+        items: {
+          orderBy: asc(menuItems.sortOrder),
+        },
       },
-    },
-  });
+    });
 
-  return cats.map((c) => ({
-    id: c.id,
-    slug: c.slug,
-    title: c.title,
-    blurb: c.blurb,
-    layout: c.layout,
-    items: c.items.map((i) => ({
-      id: i.id,
-      name: i.name,
-      description: i.description,
-      price: Number(i.price),
-      imageUrl: i.imageUrl,
-      available: i.available,
-    })),
-  }));
-});
+    return cats.map((c) => ({
+      id: c.id,
+      slug: c.slug,
+      title: c.title,
+      blurb: c.blurb,
+      layout: c.layout,
+      sortOrder: c.sortOrder,
+      items: c.items.map((i) => ({
+        id: i.id,
+        name: i.name,
+        description: i.description,
+        price: Number(i.price),
+        imageUrl: i.imageUrl,
+        available: i.available,
+      })),
+    }));
+  },
+);
 
 // ─────────────────────────────────────────────────────────────
 // Admin/staff menu management
