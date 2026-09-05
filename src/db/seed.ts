@@ -6,7 +6,7 @@ import "dotenv/config";
 import bcrypt from "bcryptjs";
 import { eq, and } from "drizzle-orm";
 import { db } from "./client.ts";
-import { categories, menuItems, settings, staff } from "./schema.ts";
+import { categories, menuItems, settings, staff, deliveryZones } from "./schema.ts";
 import { MENU_SEED } from "../data/menu-seed.ts";
 
 async function seedMenu() {
@@ -35,7 +35,13 @@ async function seedMenu() {
     if (existing) {
       await db
         .update(categories)
-        .set({ title: cat.title, blurb: cat.blurb, layout: cat.layout, sortOrder: i, updatedAt: new Date() })
+        .set({
+          title: cat.title,
+          blurb: cat.blurb,
+          layout: cat.layout,
+          sortOrder: i,
+          updatedAt: new Date(),
+        })
         .where(eq(categories.id, categoryId));
     }
 
@@ -85,6 +91,26 @@ async function seedSettings() {
   }
 }
 
+async function seedDeliveryZones() {
+  const defaults = [
+    { name: "Kojokrom", fee: "15.00" },
+    { name: "Anaji", fee: "10.00" },
+    { name: "BU Environs", fee: "5.00" },
+  ];
+
+  const existingZones = await db.query.deliveryZones.findMany();
+  if (existingZones.length > 0) {
+    console.log("✓ delivery areas already seeded, skipping");
+    return;
+  }
+
+  for (let i = 0; i < defaults.length; i++) {
+    const zone = defaults[i];
+    await db.insert(deliveryZones).values({ name: zone.name, fee: zone.fee, sortOrder: i });
+    console.log(`✓ delivery area ${zone.name} (GH₵${zone.fee})`);
+  }
+}
+
 async function seedAdmin() {
   const email = process.env.STAFF_ADMIN_EMAIL;
   const password = process.env.STAFF_ADMIN_PASSWORD;
@@ -127,9 +153,7 @@ async function seedSuperAdmin() {
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
-  await db
-    .insert(staff)
-    .values({ name, email, passwordHash, role: "super_admin", active: true });
+  await db.insert(staff).values({ name, email, passwordHash, role: "super_admin", active: true });
   console.log(`✓ created super admin account (${email})`);
 }
 
@@ -137,6 +161,7 @@ async function main() {
   console.log("Seeding FOCUS Street Kitchen database…\n");
   await seedMenu();
   await seedSettings();
+  await seedDeliveryZones();
   await seedAdmin();
   await seedSuperAdmin();
   console.log("\nDone.");

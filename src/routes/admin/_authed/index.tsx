@@ -102,6 +102,9 @@ function DashboardPage() {
                 </div>
                 <p className="mt-1 text-xs text-ink/50">
                   {o.customerName} · {o.customerPhone} · {o.orderType}
+                  {o.orderType === "delivery" && o.deliveryZoneName
+                    ? ` (${o.deliveryZoneName})`
+                    : ""}
                 </p>
                 <div className="mt-2 flex items-center justify-between text-sm">
                   <span className="text-ink/60">

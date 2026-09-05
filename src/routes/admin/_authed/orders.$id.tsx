@@ -102,6 +102,10 @@ function OrderDetailPage() {
           {order.orderType === "delivery" && (
             <>
               <p className="mt-1 text-sm">
+                <span className="text-ink/50">Area: </span>
+                {order.deliveryZoneName ?? "—"}
+              </p>
+              <p className="mt-1 text-sm">
                 <span className="text-ink/50">Address: </span>
                 {order.deliveryAddress}
               </p>
@@ -138,7 +142,12 @@ function OrderDetailPage() {
             <span>{formatGHS(Number(order.subtotal))}</span>
           </div>
           <div className="flex justify-between text-sm text-ink/60">
-            <span>Delivery</span>
+            <span>
+              Delivery
+              {order.orderType === "delivery" && order.deliveryZoneName
+                ? ` — ${order.deliveryZoneName}`
+                : ""}
+            </span>
             <span>{formatGHS(Number(order.deliveryFee))}</span>
           </div>
           <div className="flex justify-between text-base font-semibold">

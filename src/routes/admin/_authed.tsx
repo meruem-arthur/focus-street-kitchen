@@ -12,6 +12,7 @@ import {
   BarChart3,
   UtensilsCrossed,
   BadgePercent,
+  MapPin,
   Users,
   UserCircle,
   LogOut,
@@ -50,6 +51,7 @@ function AuthedAdminLayout() {
           { to: "/admin/analytics", label: "Analytics", icon: BarChart3 },
           { to: "/admin/menu", label: "Menu", icon: UtensilsCrossed },
           { to: "/admin/promotions", label: "Promotions", icon: BadgePercent },
+          { to: "/admin/delivery-areas", label: "Delivery Areas", icon: MapPin },
           { to: "/admin/staff", label: "Staff", icon: Users },
         ]
       : []),
@@ -127,6 +129,9 @@ function AuthedAdminLayout() {
                 </Link>
                 <Link to="/admin/promotions" activeProps={{ className: "text-clay" }}>
                   Promotions
+                </Link>
+                <Link to="/admin/delivery-areas" activeProps={{ className: "text-clay" }}>
+                  Delivery Areas
                 </Link>
                 <Link to="/admin/staff" activeProps={{ className: "text-clay" }}>
                   Staff

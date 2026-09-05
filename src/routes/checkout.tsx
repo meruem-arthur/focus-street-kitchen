@@ -3,13 +3,13 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useCart } from "@/lib/cart-context";
 import { createOrder } from "@/functions/orders";
 import { initializePayment } from "@/functions/payments";
-import { getDeliveryFeeFn } from "@/functions/settings";
+import { getActiveDeliveryZones } from "@/functions/delivery-zones";
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({
     meta: [{ title: "Checkout — FOCUS Street Kitchen" }, { name: "robots", content: "noindex" }],
   }),
-  loader: async () => ({ deliveryFee: (await getDeliveryFeeFn()).deliveryFee }),
+  loader: async () => ({ deliveryZones: await getActiveDeliveryZones() }),
   component: CheckoutPage,
 });
 
@@ -18,7 +18,7 @@ function formatGHS(amount: number) {
 }
 
 function CheckoutPage() {
-  const { deliveryFee } = Route.useLoaderData();
+  const { deliveryZones } = Route.useLoaderData();
   const cart = useCart();
   const navigate = useNavigate();
 
@@ -28,10 +28,13 @@ function CheckoutPage() {
   const [orderType, setOrderType] = React.useState<"pickup" | "delivery">("pickup");
   const [address, setAddress] = React.useState("");
   const [notes, setNotes] = React.useState("");
+  const [deliveryZoneId, setDeliveryZoneId] = React.useState<number | "">("");
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
-  const total = cart.subtotal + (orderType === "delivery" ? deliveryFee : 0);
+  const selectedZone = deliveryZones.find((z) => z.id === deliveryZoneId);
+  const deliveryFee = orderType === "delivery" ? (selectedZone?.fee ?? 0) : 0;
+  const total = cart.subtotal + deliveryFee;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -46,6 +49,10 @@ function CheckoutPage() {
       setError("Please add a delivery address.");
       return;
     }
+    if (orderType === "delivery" && !deliveryZoneId) {
+      setError("Please choose your delivery area.");
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -57,6 +64,7 @@ function CheckoutPage() {
           orderType,
           deliveryAddress: orderType === "delivery" ? address : undefined,
           deliveryNotes: notes || undefined,
+          deliveryZoneId: orderType === "delivery" ? (deliveryZoneId as number) : undefined,
           items: cart.lines.map((l) => ({
             menuItemId: l.menuItemId,
             quantity: l.quantity,
@@ -158,6 +166,23 @@ function CheckoutPage() {
 
             {orderType === "delivery" && (
               <div className="space-y-3">
+                <select
+                  required
+                  value={deliveryZoneId}
+                  onChange={(e) => setDeliveryZoneId(e.target.value ? Number(e.target.value) : "")}
+                  className="w-full rounded-2xl bg-card px-4 py-3 text-sm ring-1 ring-black/5 focus:outline-none focus:ring-2 focus:ring-clay/40"
+                >
+                  <option value="">
+                    {deliveryZones.length === 0
+                      ? "No delivery areas available"
+                      : "Select your delivery area"}
+                  </option>
+                  {deliveryZones.map((z) => (
+                    <option key={z.id} value={z.id}>
+                      {z.name} — {formatGHS(z.fee)}
+                    </option>
+                  ))}
+                </select>
                 <textarea
                   required
                   value={address}
@@ -197,7 +222,7 @@ function CheckoutPage() {
               </div>
               {orderType === "delivery" && (
                 <div className="flex justify-between text-sm text-ink/60">
-                  <span>Delivery</span>
+                  <span>Delivery{selectedZone ? ` — ${selectedZone.name}` : ""}</span>
                   <span>{formatGHS(deliveryFee)}</span>
                 </div>
               )}

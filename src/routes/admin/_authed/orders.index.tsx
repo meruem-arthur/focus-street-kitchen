@@ -110,7 +110,11 @@ function OrdersHistoryPage() {
                 </span>
               </div>
               <p className="mt-1 text-xs text-ink/50">
-                {o.customerName} · {o.orderType} · {orderStatusPhrase(o.orderStatus, o.orderType)}
+                {o.customerName} · {o.orderType}
+                {o.orderType === "delivery" && o.deliveryZoneName
+                  ? ` (${o.deliveryZoneName})`
+                  : ""}{" "}
+                · {orderStatusPhrase(o.orderStatus, o.orderType)}
               </p>
               <div className="mt-2 flex items-center justify-between text-sm">
                 <span className="text-ink/60">{o.itemCount} items</span>

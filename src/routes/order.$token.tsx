@@ -203,7 +203,7 @@ function OrderTrackingPage() {
             </div>
             {order.orderType === "delivery" && (
               <div className="flex justify-between text-sm text-ink/60">
-                <span>Delivery</span>
+                <span>Delivery{order.deliveryZoneName ? ` — ${order.deliveryZoneName}` : ""}</span>
                 <span>{formatGHS(order.deliveryFee)}</span>
               </div>
             )}
