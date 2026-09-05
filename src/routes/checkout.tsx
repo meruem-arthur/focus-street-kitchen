@@ -80,7 +80,10 @@ function CheckoutPage() {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-paper px-6 text-center text-ink">
         <p className="text-lg font-medium">Your cart is empty</p>
-        <Link to="/" className="rounded-full bg-clay px-5 py-2.5 text-sm font-medium text-paper">
+        <Link
+          to="/"
+          className="btn-glass rounded-full bg-clay px-5 py-2.5 text-sm font-medium text-paper"
+        >
           Back to menu
         </Link>
       </div>
@@ -97,7 +100,9 @@ function CheckoutPage() {
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-6">
           <div className="space-y-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-ink/50">Your details</h2>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-ink/50">
+              Your details
+            </h2>
             <input
               required
               value={name}
@@ -123,13 +128,17 @@ function CheckoutPage() {
           </div>
 
           <div className="space-y-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-ink/50">Order type</h2>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-ink/50">
+              Order type
+            </h2>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => setOrderType("pickup")}
                 className={`rounded-2xl px-4 py-3 text-sm font-medium ring-1 transition-colors ${
-                  orderType === "pickup" ? "bg-clay text-paper ring-clay" : "bg-card text-ink ring-black/5"
+                  orderType === "pickup"
+                    ? "btn-glass bg-clay text-paper ring-clay"
+                    : "bg-card text-ink ring-black/5"
                 }`}
               >
                 Pickup
@@ -138,7 +147,9 @@ function CheckoutPage() {
                 type="button"
                 onClick={() => setOrderType("delivery")}
                 className={`rounded-2xl px-4 py-3 text-sm font-medium ring-1 transition-colors ${
-                  orderType === "delivery" ? "bg-clay text-paper ring-clay" : "bg-card text-ink ring-black/5"
+                  orderType === "delivery"
+                    ? "btn-glass bg-clay text-paper ring-clay"
+                    : "bg-card text-ink ring-black/5"
                 }`}
               >
                 Delivery
@@ -167,7 +178,9 @@ function CheckoutPage() {
           </div>
 
           <div className="space-y-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-ink/50">Order summary</h2>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-ink/50">
+              Order summary
+            </h2>
             <div className="space-y-2 rounded-2xl bg-card p-4 ring-1 ring-black/5">
               {cart.lines.map((l) => (
                 <div key={l.menuItemId} className="flex justify-between text-sm">
@@ -200,7 +213,7 @@ function CheckoutPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="flex w-full items-center justify-center rounded-full bg-clay px-5 py-3.5 text-sm font-medium text-paper transition-transform hover:-translate-y-0.5 disabled:opacity-60 disabled:hover:translate-y-0"
+            className="btn-glass flex w-full items-center justify-center rounded-full bg-clay px-5 py-3.5 text-sm font-medium text-paper transition-transform hover:-translate-y-0.5 disabled:opacity-60 disabled:hover:translate-y-0"
           >
             {submitting ? "Processing…" : `Pay ${formatGHS(total)} with Paystack`}
           </button>

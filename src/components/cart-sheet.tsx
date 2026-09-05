@@ -12,7 +12,10 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
   return (
     <Sheet>
       <SheetTrigger asChild>{children}</SheetTrigger>
-      <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-3xl bg-paper text-ink">
+      <SheetContent
+        side="bottom"
+        className="max-h-[85vh] overflow-y-auto rounded-t-3xl bg-paper text-ink"
+      >
         <SheetHeader>
           <SheetTitle className="font-display text-xl">Your cart</SheetTitle>
         </SheetHeader>
@@ -30,7 +33,9 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     <p className="truncate text-sm font-medium">{line.name}</p>
                     <p className="mt-0.5 text-xs text-ink/50">{formatGHS(line.price)} each</p>
                   </div>
-                  <p className="shrink-0 text-sm font-semibold">{formatGHS(line.price * line.quantity)}</p>
+                  <p className="shrink-0 text-sm font-semibold">
+                    {formatGHS(line.price * line.quantity)}
+                  </p>
                 </div>
 
                 <div className="mt-2 flex items-center justify-between gap-3">
@@ -81,10 +86,12 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
               <span className="text-ink/60">Subtotal</span>
               <span className="font-semibold">{formatGHS(cart.subtotal)}</span>
             </div>
-            <p className="mt-1 text-xs text-ink/45">Delivery fee (if applicable) is added at checkout.</p>
+            <p className="mt-1 text-xs text-ink/45">
+              Delivery fee (if applicable) is added at checkout.
+            </p>
             <Link
               to="/checkout"
-              className="mt-3 flex w-full items-center justify-center rounded-full bg-clay px-5 py-3 text-sm font-medium text-paper transition-transform hover:-translate-y-0.5"
+              className="btn-glass mt-3 flex w-full items-center justify-center rounded-full bg-clay px-5 py-3 text-sm font-medium text-paper transition-transform hover:-translate-y-0.5"
             >
               Go to checkout
             </Link>

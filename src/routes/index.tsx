@@ -89,19 +89,22 @@ const REVIEWS: Review[] = [
     name: "K. Mensah",
     place: "Takoradi",
     rating: 4,
-    quote: "The loaded fries and shawarma are the real deal. Golden-hour vibe, quick service, and great for watching sport.",
+    quote:
+      "The loaded fries and shawarma are the real deal. Golden-hour vibe, quick service, and great for watching sport.",
   },
   {
     name: "A. Boateng",
     place: "Takoradi",
     rating: 5,
-    quote: "Banku and okro tastes homemade. Drive-through pickup was fast and the portions are generous for the price.",
+    quote:
+      "Banku and okro tastes homemade. Drive-through pickup was fast and the portions are generous for the price.",
   },
   {
     name: "S. Amoah",
     place: "Aberdeen Plaza",
     rating: 4,
-    quote: "Ordered the Focus Special Rice for a game night. Hot, well seasoned, and delivery was quicker than I expected.",
+    quote:
+      "Ordered the Focus Special Rice for a game night. Hot, well seasoned, and delivery was quicker than I expected.",
   },
 ];
 
@@ -120,14 +123,26 @@ const NAV = [
 
 function PhoneIcon() {
   return (
-    <svg className="size-4 shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <svg
+      className="size-4 shrink-0"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
       <path d="M4 3h3l1.5 4-2 1.5a11 11 0 0 0 5 5l1.5-2 4 1.5v3a1 1 0 0 1-1 1A15 15 0 0 1 3 4a1 1 0 0 1 1-1Z" />
     </svg>
   );
 }
 function PinIcon() {
   return (
-    <svg className="size-4 shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <svg
+      className="size-4 shrink-0"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
       <path d="M10 2c-4 0-7 3-7 7 0 5 7 9 7 9s7-4 7-9c0-4-3-7-7-7Z" />
       <circle cx="10" cy="9" r="2.2" />
     </svg>
@@ -135,22 +150,60 @@ function PinIcon() {
 }
 function WhatsAppIcon() {
   return (
-    <svg className="size-4 shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <svg
+      className="size-4 shrink-0"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
       <path d="M3 17l1.2-3.4A7 7 0 1 1 6.6 14.4L3 17Z" />
       <path d="M7.5 7.5c0 2.5 2 4.5 4.5 4.5.4 0 .8-.1 1-.4l.6-.8-1.6-.8-.6.5c-.8-.3-1.5-1-1.8-1.8l.5-.6-.8-1.6-.8.6c-.3.2-.4.6-.4 1Z" />
     </svg>
   );
 }
 
-function CornerBracket({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+function CornerBracket({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
     <span className={`inline-flex items-center gap-1.5 ${className}`}>
-      <svg width="12" height="16" viewBox="0 0 12 16" fill="none" className="shrink-0 self-end" aria-hidden="true">
-        <path d="M1 1v10a4 4 0 0 0 4 4h6" stroke="currentColor" className="text-clay" strokeWidth="2" strokeLinecap="round" />
+      <svg
+        width="12"
+        height="16"
+        viewBox="0 0 12 16"
+        fill="none"
+        className="shrink-0 self-end"
+        aria-hidden="true"
+      >
+        <path
+          d="M1 1v10a4 4 0 0 0 4 4h6"
+          stroke="currentColor"
+          className="text-clay"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
       </svg>
       <span>{children}</span>
-      <svg width="12" height="16" viewBox="0 0 12 16" fill="none" className="shrink-0 self-start" aria-hidden="true">
-        <path d="M11 15V5a4 4 0 0 0-4-4H1" stroke="currentColor" className="text-clay" strokeWidth="2" strokeLinecap="round" />
+      <svg
+        width="12"
+        height="16"
+        viewBox="0 0 12 16"
+        fill="none"
+        className="shrink-0 self-start"
+        aria-hidden="true"
+      >
+        <path
+          d="M11 15V5a4 4 0 0 0-4-4H1"
+          stroke="currentColor"
+          className="text-clay"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
       </svg>
     </span>
   );
@@ -160,7 +213,9 @@ function StarRow({ rating }: { rating: number }) {
   return (
     <div className="flex gap-0.5 text-[11px] leading-none">
       {Array.from({ length: 5 }).map((_, i) => (
-        <span key={i} className={i < rating ? "text-amber" : "text-ink/20"}>★</span>
+        <span key={i} className={i < rating ? "text-amber" : "text-ink/20"}>
+          ★
+        </span>
       ))}
     </div>
   );
@@ -179,7 +234,7 @@ function AddToCartControl({ item }: { item: PublicMenuItem }) {
       <button
         type="button"
         onClick={() => cart.addItem({ menuItemId: item.id, name: item.name, price: item.price })}
-        className="shrink-0 rounded-full bg-clay/10 px-3 py-1.5 text-xs font-semibold text-clay transition-colors hover:bg-clay/15"
+        className="btn-glass-light shrink-0 rounded-full bg-clay/10 px-3 py-1.5 text-xs font-semibold text-clay transition-colors hover:bg-clay/15"
       >
         Add
       </button>
@@ -187,7 +242,7 @@ function AddToCartControl({ item }: { item: PublicMenuItem }) {
   }
 
   return (
-    <div className="flex shrink-0 items-center gap-1.5 rounded-full bg-clay px-1 py-1">
+    <div className="btn-glass flex shrink-0 items-center gap-1.5 rounded-full bg-clay px-1 py-1">
       <button
         type="button"
         onClick={() => cart.updateQuantity(item.id, line.quantity - 1)}
@@ -211,7 +266,13 @@ function AddToCartControl({ item }: { item: PublicMenuItem }) {
 
 function CartBagIcon() {
   return (
-    <svg className="size-4 shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <svg
+      className="size-4 shrink-0"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
       <path d="M5 7h10l-.8 9.2a1.5 1.5 0 0 1-1.5 1.3H7.3a1.5 1.5 0 0 1-1.5-1.3L5 7Z" />
       <path d="M7.5 7V5.5a2.5 2.5 0 0 1 5 0V7" />
     </svg>
@@ -244,7 +305,9 @@ function Index() {
               </div>
             </div>
             <span className="inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-[11px] font-medium ring-1 ring-black/5">
-              <span className={`size-1.5 rounded-full ${status.isOpen ? "bg-sage" : "bg-clay"}`}></span>
+              <span
+                className={`size-1.5 rounded-full ${status.isOpen ? "bg-sage" : "bg-clay"}`}
+              ></span>
               {status.label}
             </span>
           </div>
@@ -268,13 +331,14 @@ function Index() {
             Street food, <span className="text-clay">golden-hour</span> hot.
           </h1>
           <p className="mt-3 max-w-[42ch] text-sm leading-relaxed text-pretty text-ink/65">
-            Banku, okro, shawarma and loaded fries cooked to order in Takoradi. Dine in, drive through or get it delivered.
+            Banku, okro, shawarma and loaded fries cooked to order in Takoradi. Dine in, drive
+            through or get it delivered.
           </p>
 
           <div className="mt-5 flex items-center gap-3">
             <a
               href="tel:0592767499"
-              className="inline-flex items-center gap-2 rounded-full bg-clay px-5 py-3 text-sm font-medium text-paper ring-1 ring-clay transition-transform hover:-translate-y-0.5"
+              className="btn-glass inline-flex items-center gap-2 rounded-full bg-clay px-5 py-3 text-sm font-medium text-paper ring-1 ring-clay transition-transform hover:-translate-y-0.5"
             >
               <PhoneIcon />
               Order by phone
@@ -317,7 +381,9 @@ function Index() {
                 <h2 className="text-2xl font-semibold tracking-tight text-balance">
                   <CornerBracket>{cat.title}</CornerBracket>
                 </h2>
-                {from !== null && <span className="text-xs text-ink/45">from {formatGHS(from)}</span>}
+                {from !== null && (
+                  <span className="text-xs text-ink/45">from {formatGHS(from)}</span>
+                )}
               </div>
               {cat.blurb && <p className="mt-1 text-sm text-pretty text-ink/55">{cat.blurb}</p>}
 
@@ -338,7 +404,9 @@ function Index() {
                         )}
                         <div className="min-w-0">
                           <p className="text-[15px] font-medium">{item.name}</p>
-                          {item.description && <p className="mt-0.5 text-xs text-ink/50">{item.description}</p>}
+                          {item.description && (
+                            <p className="mt-0.5 text-xs text-ink/50">{item.description}</p>
+                          )}
                           <p className="mt-1 text-sm font-semibold">{formatGHS(item.price)}</p>
                         </div>
                       </div>
@@ -351,7 +419,10 @@ function Index() {
               {cat.layout === "grid" && (
                 <div className="mt-4 grid grid-cols-2 gap-3">
                   {cat.items.map((item) => (
-                    <div key={item.id} className="rounded-2xl bg-card px-4 py-3 ring-1 ring-black/5">
+                    <div
+                      key={item.id}
+                      className="rounded-2xl bg-card px-4 py-3 ring-1 ring-black/5"
+                    >
                       {item.imageUrl && (
                         <img
                           src={item.imageUrl}
@@ -360,7 +431,9 @@ function Index() {
                         />
                       )}
                       <p className="text-sm font-medium">{item.name}</p>
-                      {item.description && <p className="mt-0.5 text-xs text-ink/50">{item.description}</p>}
+                      {item.description && (
+                        <p className="mt-0.5 text-xs text-ink/50">{item.description}</p>
+                      )}
                       <div className="mt-1.5 flex items-center justify-between gap-2">
                         <p className="text-sm text-clay">{formatGHS(item.price)}</p>
                         <AddToCartControl item={item} />
@@ -373,7 +446,10 @@ function Index() {
               {cat.layout === "triple" && (
                 <div className="mt-4 grid grid-cols-3 gap-3">
                   {cat.items.map((item) => (
-                    <div key={item.id} className="rounded-2xl bg-card px-3 py-3 ring-1 ring-black/5">
+                    <div
+                      key={item.id}
+                      className="rounded-2xl bg-card px-3 py-3 ring-1 ring-black/5"
+                    >
                       <p className="text-xs font-medium">{item.name}</p>
                       <p className="mt-1 text-xs text-clay">{formatGHS(item.price)}</p>
                       <div className="mt-1.5">
@@ -393,10 +469,7 @@ function Index() {
         {promotions.length > 0 && (
           <div className="grid gap-3 sm:grid-cols-2">
             {promotions.map((promo: (typeof promotions)[number]) => (
-              <div
-                key={promo.id}
-                className="rounded-[24px] bg-card p-5 ring-1 ring-black/5"
-              >
+              <div key={promo.id} className="rounded-[24px] bg-card p-5 ring-1 ring-black/5">
                 {promo.badgeText && (
                   <span className="inline-block rounded-full bg-clay/10 px-2.5 py-1 text-[11px] font-medium text-clay">
                     {promo.badgeText}
@@ -418,10 +491,13 @@ function Index() {
           <span className="absolute bottom-0 left-[72%] size-6 -translate-x-1/2 translate-y-1/2 rounded-full bg-paper sm:left-[76%]" />
 
           <div className="flex-1 p-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-paper/80">Friday Promo</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-paper/80">
+              Friday Promo
+            </p>
             <h2 className="mt-1 text-2xl font-semibold leading-tight">Game day bundle</h2>
             <p className="mt-2 text-sm text-pretty text-paper/85">
-              All Season Pizza (chicken, beef, sausage, veggies) · 1 Litre Coke · Loaded Fries · 300ml Coke.
+              All Season Pizza (chicken, beef, sausage, veggies) · 1 Litre Coke · Loaded Fries ·
+              300ml Coke.
             </p>
             <a
               href="tel:0592767499"
@@ -446,7 +522,9 @@ function Index() {
               Our Best <span className="text-clay">Delivered</span>
             </CornerBracket>
           </h2>
-          <p className="mt-1 text-center text-sm text-ink/55">Top picks, cooked to order and out the door fast.</p>
+          <p className="mt-1 text-center text-sm text-ink/55">
+            Top picks, cooked to order and out the door fast.
+          </p>
 
           <div className="mt-5 space-y-4">
             {DELIVERED.map((dish) => (
@@ -470,7 +548,7 @@ function Index() {
                 </div>
                 <a
                   href="tel:0592767499"
-                  className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-clay px-3.5 py-2 text-xs font-medium text-paper transition-transform hover:-translate-y-0.5"
+                  className="btn-glass inline-flex shrink-0 items-center gap-1.5 rounded-full bg-clay px-3.5 py-2 text-xs font-medium text-paper transition-transform hover:-translate-y-0.5"
                 >
                   <PhoneIcon />
                   Order
@@ -510,7 +588,9 @@ function Index() {
                   <StarRow rating={r.rating} />
                 </div>
               </div>
-              <blockquote className="mt-3 text-xs leading-relaxed text-pretty text-ink/70">“{r.quote}”</blockquote>
+              <blockquote className="mt-3 text-xs leading-relaxed text-pretty text-ink/70">
+                “{r.quote}”
+              </blockquote>
               <p className="mt-2 text-[11px] font-medium text-ink/40">— {r.place}</p>
             </div>
           ))}
@@ -523,11 +603,14 @@ function Index() {
         <div className="mt-4 rounded-3xl bg-card p-5 ring-1 ring-black/5">
           <p className="text-sm font-medium">Aberdeen Plaza, Ground Floor</p>
           <p className="mt-1 text-xs text-pretty text-ink/55">
-            Behind Cleanself Supermarket · adjacent Borga Anex, B.U Ridge, Cape Coast–Takoradi Rd, Takoradi.
+            Behind Cleanself Supermarket · adjacent Borga Anex, B.U Ridge, Cape Coast–Takoradi Rd,
+            Takoradi.
           </p>
 
           <div className="mt-4 flex items-center gap-2 text-xs text-ink/60">
-            <span className={`size-1.5 rounded-full ${status.isOpen ? "bg-sage" : "bg-clay"}`}></span>
+            <span
+              className={`size-1.5 rounded-full ${status.isOpen ? "bg-sage" : "bg-clay"}`}
+            ></span>
             <span className="font-medium">Today</span>
             <span>{status.label}</span>
           </div>
@@ -535,7 +618,7 @@ function Index() {
           <div className="mt-4 grid grid-cols-2 gap-3">
             <a
               href="tel:0592767499"
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-clay px-4 py-3 text-sm font-medium text-paper ring-1 ring-clay transition-transform hover:-translate-y-0.5"
+              className="btn-glass inline-flex items-center justify-center gap-2 rounded-full bg-clay px-4 py-3 text-sm font-medium text-paper ring-1 ring-clay transition-transform hover:-translate-y-0.5"
             >
               <PhoneIcon />
               Call
@@ -579,7 +662,7 @@ function Index() {
               <CartSheet>
                 <button
                   type="button"
-                  className="ml-auto inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-clay px-5 py-3 text-sm font-medium text-paper ring-1 ring-clay transition-transform hover:-translate-y-0.5"
+                  className="btn-glass ml-auto inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-clay px-5 py-3 text-sm font-medium text-paper ring-1 ring-clay transition-transform hover:-translate-y-0.5"
                 >
                   <CartBagIcon />
                   View cart
@@ -594,7 +677,7 @@ function Index() {
               </div>
               <a
                 href="tel:0592767499"
-                className="ml-auto inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-clay px-5 py-3 text-sm font-medium text-paper ring-1 ring-clay transition-transform hover:-translate-y-0.5"
+                className="btn-glass ml-auto inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-clay px-5 py-3 text-sm font-medium text-paper ring-1 ring-clay transition-transform hover:-translate-y-0.5"
               >
                 <PhoneIcon />
                 Call to order
