@@ -1,7 +1,10 @@
 import * as React from "react";
 import { createFileRoute, useNavigate, redirect, Link } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { loginStaff, getCurrentStaff } from "@/functions/auth";
 import { PasswordInput } from "@/components/ui/password-input";
+import { Spinner } from "@/components/ui/spinner";
+import logoIcon from "@/assets/logo-icon.png";
 
 export const Route = createFileRoute("/admin/login")({
   head: () => ({
@@ -27,6 +30,7 @@ function LoginPage() {
     setError(null);
     try {
       const account = await loginStaff({ data: { identifier, password } });
+      toast.success("Login successful");
       await navigate({ to: account.role === "super_admin" ? "/super-admin" : "/admin" });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed.");
@@ -38,9 +42,11 @@ function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-paper px-6 text-ink">
       <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
         <div className="text-center">
-          <div className="mx-auto grid size-10 place-items-center rounded-[10px] bg-clay text-paper">
-            <span className="text-base font-semibold leading-none">F</span>
-          </div>
+          <img
+            src={logoIcon}
+            alt="FOCUS Street Kitchen logo"
+            className="mx-auto size-14 rounded-[14px] object-cover ring-1 ring-black/5"
+          />
           <h1 className="mt-3 text-xl font-semibold">Sign in</h1>
           <p className="mt-1 text-sm text-ink/50">FOCUS Street Kitchen</p>
         </div>
@@ -68,8 +74,9 @@ function LoginPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="btn-glass w-full rounded-full bg-clay px-5 py-3 text-sm font-medium text-paper disabled:opacity-60"
+          className="btn-glass inline-flex w-full items-center justify-center gap-2 rounded-full bg-clay px-5 py-3 text-sm font-medium text-paper disabled:opacity-60"
         >
+          {submitting && <Spinner />}
           {submitting ? "Signing in…" : "Sign in"}
         </button>
 

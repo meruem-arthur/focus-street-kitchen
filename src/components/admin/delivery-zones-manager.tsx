@@ -1,5 +1,7 @@
 import * as React from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { Spinner } from "@/components/ui/spinner";
 import {
   listDeliveryZones,
   saveDeliveryZone,
@@ -21,6 +23,7 @@ export function DeliveryZonesManager() {
   const [showAdd, setShowAdd] = React.useState(false);
   const [editingId, setEditingId] = React.useState<number | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [pendingId, setPendingId] = React.useState<number | null>(null);
 
   function refresh() {
     return queryClient.invalidateQueries({ queryKey: ["delivery-zones-list"] });
@@ -28,11 +31,15 @@ export function DeliveryZonesManager() {
 
   async function toggleActive(zone: DeliveryZone) {
     setError(null);
+    setPendingId(zone.id);
     try {
       await setDeliveryZoneActive({ data: { id: zone.id, active: !zone.active } });
       await refresh();
+      toast.success(zone.active ? `${zone.name} deactivated` : `${zone.name} activated`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not update that area.");
+    } finally {
+      setPendingId(null);
     }
   }
 
@@ -40,11 +47,15 @@ export function DeliveryZonesManager() {
     if (!confirm(`Delete "${zone.name}"? Past orders keep showing this area and its price.`))
       return;
     setError(null);
+    setPendingId(zone.id);
     try {
       await deleteDeliveryZone({ data: { id: zone.id } });
       await refresh();
+      toast.success(`${zone.name} deleted`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not delete that area.");
+    } finally {
+      setPendingId(null);
     }
   }
 
@@ -113,14 +124,18 @@ export function DeliveryZonesManager() {
                   </button>
                   <button
                     onClick={() => toggleActive(zone)}
-                    className="btn-glass-light rounded-full px-3 py-1.5 font-medium text-ink/70"
+                    disabled={pendingId === zone.id}
+                    className="btn-glass-light inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-medium text-ink/70 disabled:opacity-60"
                   >
+                    {pendingId === zone.id && <Spinner className="size-3.5" />}
                     {zone.active ? "Deactivate" : "Activate"}
                   </button>
                   <button
                     onClick={() => handleDelete(zone)}
-                    className="btn-glass-light rounded-full px-3 py-1.5 font-medium text-red-700"
+                    disabled={pendingId === zone.id}
+                    className="btn-glass-light inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-medium text-red-700 disabled:opacity-60"
                   >
+                    {pendingId === zone.id && <Spinner className="size-3.5" />}
                     Delete
                   </button>
                 </div>
@@ -160,6 +175,7 @@ function AddZoneDialog({ onClose, onCreated }: { onClose: () => void; onCreated:
     setSubmitting(true);
     try {
       await saveDeliveryZone({ data: { name, fee: parsedFee } });
+      toast.success("Delivery area created");
       onCreated();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not create that area.");
@@ -207,8 +223,9 @@ function AddZoneDialog({ onClose, onCreated }: { onClose: () => void; onCreated:
           <button
             type="submit"
             disabled={submitting}
-            className="btn-glass flex-1 rounded-full bg-clay px-4 py-2.5 text-sm font-medium text-paper disabled:opacity-60"
+            className="btn-glass flex-1 inline-flex items-center justify-center gap-1.5 rounded-full bg-clay px-4 py-2.5 text-sm font-medium text-paper disabled:opacity-60"
           >
+            {submitting && <Spinner className="size-3.5" />}
             {submitting ? "Saving…" : "Create"}
           </button>
         </div>
@@ -242,6 +259,7 @@ function EditZoneCard({
     setSubmitting(true);
     try {
       await saveDeliveryZone({ data: { id: zone.id, name, fee: parsedFee } });
+      toast.success("Delivery area updated");
       onSaved();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save that area.");
@@ -285,8 +303,9 @@ function EditZoneCard({
         <button
           type="submit"
           disabled={submitting}
-          className="btn-glass flex-1 rounded-full bg-clay px-3 py-1.5 font-medium text-paper disabled:opacity-60"
+          className="btn-glass flex-1 inline-flex items-center justify-center gap-1.5 rounded-full bg-clay px-3 py-1.5 font-medium text-paper disabled:opacity-60"
         >
+          {submitting && <Spinner className="size-3.5" />}
           {submitting ? "Saving…" : "Save"}
         </button>
       </div>

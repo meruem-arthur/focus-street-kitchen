@@ -4,6 +4,7 @@ import { useCart } from "@/lib/cart-context";
 import { createOrder } from "@/functions/orders";
 import { initializePayment } from "@/functions/payments";
 import { getActiveDeliveryZones } from "@/functions/delivery-zones";
+import { Spinner } from "@/components/ui/spinner";
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({
@@ -240,6 +241,7 @@ function CheckoutPage() {
             disabled={submitting}
             className="btn-glass flex w-full items-center justify-center rounded-full bg-clay px-5 py-3.5 text-sm font-medium text-paper transition-transform hover:-translate-y-0.5 disabled:opacity-60 disabled:hover:translate-y-0"
           >
+            {submitting && <Spinner />}
             {submitting ? "Processing…" : `Pay ${formatGHS(total)} with Paystack`}
           </button>
         </form>

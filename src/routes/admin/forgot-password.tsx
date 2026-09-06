@@ -1,10 +1,16 @@
 import * as React from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import logoIcon from "@/assets/logo-icon.png";
+import { toast } from "sonner";
 import { requestPasswordReset } from "@/functions/auth";
+import { Spinner } from "@/components/ui/spinner";
 
 export const Route = createFileRoute("/admin/forgot-password")({
   head: () => ({
-    meta: [{ title: "Forgot Password — FOCUS Street Kitchen" }, { name: "robots", content: "noindex" }],
+    meta: [
+      { title: "Forgot Password — FOCUS Street Kitchen" },
+      { name: "robots", content: "noindex" },
+    ],
   }),
   component: ForgotPasswordPage,
 });
@@ -22,6 +28,7 @@ function ForgotPasswordPage() {
     try {
       await requestPasswordReset({ data: { email } });
       setSubmitted(true);
+      toast.success("Reset link sent — check your email");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -33,9 +40,11 @@ function ForgotPasswordPage() {
     <div className="flex min-h-screen items-center justify-center bg-paper px-6 text-ink">
       <div className="w-full max-w-sm space-y-5">
         <div className="text-center">
-          <div className="mx-auto grid size-10 place-items-center rounded-[10px] bg-clay text-paper">
-            <span className="text-base font-semibold leading-none">F</span>
-          </div>
+          <img
+            src={logoIcon}
+            alt="FOCUS Street Kitchen logo"
+            className="mx-auto size-14 rounded-[14px] object-cover ring-1 ring-black/5"
+          />
           <h1 className="mt-3 text-xl font-semibold">Reset your password</h1>
           <p className="mt-1 text-sm text-ink/50">For Admin &amp; Super Admin accounts</p>
         </div>
@@ -56,21 +65,24 @@ function ForgotPasswordPage() {
               autoComplete="email"
               className="w-full rounded-2xl bg-card px-4 py-3 text-sm ring-1 ring-black/5 placeholder:text-ink/35 focus:outline-none focus:ring-2 focus:ring-clay/40"
             />
-            {error && <p className="rounded-xl bg-red-50 px-4 py-2.5 text-sm text-red-700">{error}</p>}
+            {error && (
+              <p className="rounded-xl bg-red-50 px-4 py-2.5 text-sm text-red-700">{error}</p>
+            )}
             <button
               type="submit"
               disabled={submitting}
-              className="btn-glass w-full rounded-full bg-clay px-5 py-3 text-sm font-medium text-paper disabled:opacity-60"
+              className="btn-glass inline-flex w-full items-center justify-center gap-2 rounded-full bg-clay px-5 py-3 text-sm font-medium text-paper disabled:opacity-60"
             >
+              {submitting && <Spinner />}
               {submitting ? "Sending…" : "Send reset link"}
             </button>
           </form>
         )}
 
         <div className="rounded-2xl bg-amber/10 p-4 text-center text-xs text-ink/60 ring-1 ring-black/5">
-          <strong className="font-semibold text-ink/75">Staff account?</strong> For security reasons,
-          staff password resets are handled by the administrator. Please contact your administrator
-          for assistance.
+          <strong className="font-semibold text-ink/75">Staff account?</strong> For security
+          reasons, staff password resets are handled by the administrator. Please contact your
+          administrator for assistance.
         </div>
 
         <div className="text-center text-xs">

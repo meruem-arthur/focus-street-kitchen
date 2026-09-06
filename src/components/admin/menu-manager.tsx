@@ -1,6 +1,8 @@
 import * as React from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Pencil, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { Spinner } from "@/components/ui/spinner";
 import {
   getMenu,
   saveMenuItem,
@@ -52,6 +54,7 @@ export function MenuManager() {
     try {
       await setItemAvailability({ data: { id, available } });
       await refresh();
+      toast.success(available ? "Marked available" : "Marked unavailable");
     } catch (err) {
       setListError(err instanceof Error ? err.message : "Could not update availability.");
     }
@@ -107,6 +110,7 @@ export function MenuManager() {
     try {
       const url = await uploadImageToCloudinary(file);
       await saveImageUrl(item.id, categoryId, item.name, item.price, item.available, url);
+      toast.success("Photo uploaded");
     } catch (err) {
       setUploadErrors((prev) => ({
         ...prev,
@@ -123,6 +127,7 @@ export function MenuManager() {
     try {
       await deleteMenuItem({ data: { id: item.id } });
       await refresh();
+      toast.success(`"${item.name}" deleted`);
     } catch (err) {
       setListError(err instanceof Error ? err.message : "Could not delete this item.");
     }
@@ -138,6 +143,7 @@ export function MenuManager() {
     try {
       await deleteCategory({ data: { id: cat.id } });
       await refresh();
+      toast.success(`"${cat.title}" deleted`);
     } catch (err) {
       setListError(err instanceof Error ? err.message : "Could not delete this category.");
     }
@@ -274,10 +280,11 @@ export function MenuManager() {
                     />
                     <div className="mt-1 flex items-center gap-2">
                       <label
-                        className={`inline-flex shrink-0 cursor-pointer items-center rounded-lg bg-paper px-2 py-1 text-[10px] font-medium text-ink/60 ring-1 ring-black/10 ${
+                        className={`inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg bg-paper px-2 py-1 text-[10px] font-medium text-ink/60 ring-1 ring-black/10 ${
                           uploadingId === item.id ? "opacity-50" : ""
                         }`}
                       >
+                        {uploadingId === item.id && <Spinner className="size-3" />}
                         {uploadingId === item.id ? "Uploading…" : "Upload from device"}
                         <input
                           type="file"
@@ -397,6 +404,7 @@ function CategoryDialog({
           sortOrder: editing ? editing.sortOrder : suggestedSortOrder,
         },
       });
+      toast.success(editing ? "Category updated" : "Category created");
       await onSaved();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save this category.");
@@ -465,8 +473,9 @@ function CategoryDialog({
           <button
             type="submit"
             disabled={submitting}
-            className="btn-glass flex-1 rounded-full bg-clay px-4 py-2.5 text-sm font-medium text-paper disabled:opacity-60"
+            className="btn-glass flex-1 inline-flex items-center justify-center gap-1.5 rounded-full bg-clay px-4 py-2.5 text-sm font-medium text-paper disabled:opacity-60"
           >
+            {submitting && <Spinner className="size-3.5" />}
             {submitting ? "Saving…" : editing ? "Save changes" : "Create"}
           </button>
         </div>
@@ -523,6 +532,7 @@ function ItemDialog({
           available,
         },
       });
+      toast.success(editing ? "Item updated" : "Item added");
       await onSaved();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save this item.");
@@ -604,8 +614,9 @@ function ItemDialog({
           <button
             type="submit"
             disabled={submitting}
-            className="btn-glass flex-1 rounded-full bg-clay px-4 py-2.5 text-sm font-medium text-paper disabled:opacity-60"
+            className="btn-glass flex-1 inline-flex items-center justify-center gap-1.5 rounded-full bg-clay px-4 py-2.5 text-sm font-medium text-paper disabled:opacity-60"
           >
+            {submitting && <Spinner className="size-3.5" />}
             {submitting ? "Saving…" : editing ? "Save changes" : "Add item"}
           </button>
         </div>

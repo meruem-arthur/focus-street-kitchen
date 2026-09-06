@@ -1,5 +1,7 @@
 import * as React from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { Spinner } from "@/components/ui/spinner";
 import {
   listPromotions,
   savePromotion,
@@ -12,6 +14,7 @@ export function PromotionsManager() {
   const promoQuery = useQuery({ queryKey: ["promotions-list"], queryFn: () => listPromotions() });
   const [showAdd, setShowAdd] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [pendingId, setPendingId] = React.useState<number | null>(null);
 
   function refresh() {
     return queryClient.invalidateQueries({ queryKey: ["promotions-list"] });
@@ -19,22 +22,30 @@ export function PromotionsManager() {
 
   async function toggleActive(id: number, active: boolean) {
     setError(null);
+    setPendingId(id);
     try {
       await setPromotionActive({ data: { id, active } });
       await refresh();
+      toast.success(active ? "Promotion activated" : "Promotion deactivated");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not update promotion.");
+    } finally {
+      setPendingId(null);
     }
   }
 
   async function handleDelete(id: number) {
     if (!confirm("Delete this promotion?")) return;
     setError(null);
+    setPendingId(id);
     try {
       await deletePromotion({ data: { id } });
       await refresh();
+      toast.success("Promotion deleted");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not delete promotion.");
+    } finally {
+      setPendingId(null);
     }
   }
 
@@ -84,14 +95,18 @@ export function PromotionsManager() {
               <div className="mt-3 flex flex-wrap gap-2 text-xs">
                 <button
                   onClick={() => toggleActive(p.id, !p.active)}
-                  className="btn-glass-light rounded-full px-3 py-1.5 font-medium text-ink/70"
+                  disabled={pendingId === p.id}
+                  className="btn-glass-light inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-medium text-ink/70 disabled:opacity-60"
                 >
+                  {pendingId === p.id && <Spinner className="size-3.5" />}
                   {p.active ? "Deactivate" : "Activate"}
                 </button>
                 <button
                   onClick={() => handleDelete(p.id)}
-                  className="btn-glass-light rounded-full px-3 py-1.5 font-medium text-red-700"
+                  disabled={pendingId === p.id}
+                  className="btn-glass-light inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-medium text-red-700 disabled:opacity-60"
                 >
+                  {pendingId === p.id && <Spinner className="size-3.5" />}
                   Delete
                 </button>
               </div>
@@ -143,6 +158,7 @@ function AddPromotionDialog({
           endDate: endDate || null,
         },
       });
+      toast.success("Promotion created");
       onCreated();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not create promotion.");
@@ -204,8 +220,9 @@ function AddPromotionDialog({
           <button
             type="submit"
             disabled={submitting}
-            className="btn-glass flex-1 rounded-full bg-clay px-4 py-2.5 text-sm font-medium text-paper disabled:opacity-60"
+            className="btn-glass flex-1 inline-flex items-center justify-center gap-1.5 rounded-full bg-clay px-4 py-2.5 text-sm font-medium text-paper disabled:opacity-60"
           >
+            {submitting && <Spinner className="size-3.5" />}
             {submitting ? "Saving…" : "Create"}
           </button>
         </div>

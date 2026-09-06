@@ -1,8 +1,10 @@
 import * as React from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { getOrderById, updateOrderStatus } from "@/functions/orders";
 import { orderStatusPhrase } from "@/lib/order-status";
+import { Spinner } from "@/components/ui/spinner";
 
 export const Route = createFileRoute("/admin/_authed/orders/$id")({
   head: () => ({
@@ -45,6 +47,11 @@ function OrderDetailPage() {
       await queryClient.invalidateQueries({ queryKey: ["admin-active-orders"] });
       await queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
       await queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
+      toast.success(
+        newStatus === "cancelled"
+          ? "Order cancelled"
+          : `Order marked as ${orderStatusPhrase(newStatus, order.orderType)}`,
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not update status.");
     } finally {
@@ -170,16 +177,18 @@ function OrderDetailPage() {
                 <button
                   onClick={() => moveTo(nextStatus)}
                   disabled={updating}
-                  className="btn-glass rounded-full bg-clay px-4 py-2 text-xs font-medium text-paper disabled:opacity-60"
+                  className="btn-glass inline-flex items-center gap-1.5 rounded-full bg-clay px-4 py-2 text-xs font-medium text-paper disabled:opacity-60"
                 >
+                  {updating && <Spinner className="size-3.5" />}
                   Mark as {orderStatusPhrase(nextStatus, order.orderType)}
                 </button>
               )}
               <button
                 onClick={() => moveTo("cancelled")}
                 disabled={updating}
-                className="btn-glass-light rounded-full px-4 py-2 text-xs font-medium text-red-700 disabled:opacity-60"
+                className="btn-glass-light inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium text-red-700 disabled:opacity-60"
               >
+                {updating && <Spinner className="size-3.5" />}
                 Cancel order
               </button>
             </div>
