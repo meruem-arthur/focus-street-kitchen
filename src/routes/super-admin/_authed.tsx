@@ -1,5 +1,7 @@
-import { createFileRoute, Outlet, redirect, Link, useNavigate, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect, useNavigate, useRouter } from "@tanstack/react-router";
+import { LayoutGrid, ShieldCheck, UtensilsCrossed, BadgePercent, Settings } from "lucide-react";
 import { getCurrentStaff, logoutStaff } from "@/functions/auth";
+import { DashboardShell, type DashboardNavItem } from "@/components/dashboard-shell";
 
 export const Route = createFileRoute("/super-admin/_authed")({
   beforeLoad: async () => {
@@ -13,6 +15,14 @@ export const Route = createFileRoute("/super-admin/_authed")({
   component: SuperAdminLayout,
 });
 
+const navItems: DashboardNavItem[] = [
+  { to: "/super-admin", label: "Overview", icon: LayoutGrid, exact: true },
+  { to: "/super-admin/admins", label: "Admin Accounts", icon: ShieldCheck },
+  { to: "/super-admin/menu", label: "Menu", icon: UtensilsCrossed },
+  { to: "/super-admin/promotions", label: "Promotions", icon: BadgePercent },
+  { to: "/super-admin/settings", label: "Settings", icon: Settings },
+];
+
 function SuperAdminLayout() {
   const { staff } = Route.useRouteContext();
   const navigate = useNavigate();
@@ -25,44 +35,14 @@ function SuperAdminLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-paper text-ink">
-      <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-black/5 bg-paper/95 px-4 py-3 backdrop-blur-sm">
-        <Link to="/super-admin" className="flex shrink-0 items-center gap-2">
-          <div className="grid size-8 place-items-center rounded-[8px] bg-ink text-paper">
-            <span className="text-sm font-semibold leading-none">F</span>
-          </div>
-          <span className="hidden text-sm font-semibold sm:inline">Super Admin</span>
-        </Link>
-        <nav className="flex flex-1 items-center gap-3 overflow-x-auto text-xs font-medium text-ink/60">
-          <Link to="/super-admin" activeProps={{ className: "text-clay" }}>
-            Overview
-          </Link>
-          <Link to="/super-admin/admins" activeProps={{ className: "text-clay" }}>
-            Admin Accounts
-          </Link>
-          <Link to="/super-admin/menu" activeProps={{ className: "text-clay" }}>
-            Menu
-          </Link>
-          <Link to="/super-admin/promotions" activeProps={{ className: "text-clay" }}>
-            Promotions
-          </Link>
-          <Link to="/super-admin/settings" activeProps={{ className: "text-clay" }}>
-            Settings
-          </Link>
-        </nav>
-        <div className="flex shrink-0 items-center gap-3">
-          <span className="hidden text-xs text-ink/50 sm:inline">{staff.name}</span>
-          <button
-            onClick={handleLogout}
-            className="btn-glass-light rounded-full px-3 py-1.5 text-xs font-medium text-clay"
-          >
-            Log out
-          </button>
-        </div>
-      </header>
-      <main className="px-4 py-5">
-        <Outlet />
-      </main>
-    </div>
+    <DashboardShell
+      subtitle="Super Admin"
+      homeTo="/super-admin"
+      navItems={navItems}
+      staffName={staff.name}
+      onLogout={handleLogout}
+    >
+      <Outlet />
+    </DashboardShell>
   );
 }
