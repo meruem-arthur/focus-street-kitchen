@@ -1,11 +1,20 @@
 import * as React from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { listAdminAccounts, createAdminAccount, setAdminActive, resetAdminPassword } from "@/functions/staff";
+import { toast } from "sonner";
+import { Spinner } from "@/components/ui/spinner";
+import {
+  listAdminAccounts,
+  createAdminAccount,
+  setAdminActive,
+  resetAdminPassword,
+} from "@/functions/staff";
 import { PasswordInput } from "@/components/ui/password-input";
 
 export const Route = createFileRoute("/super-admin/_authed/admins")({
-  head: () => ({ meta: [{ title: "Admin Accounts — Super Admin" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({
+    meta: [{ title: "Admin Accounts — Super Admin" }, { name: "robots", content: "noindex" }],
+  }),
   component: AdminAccountsPage,
 });
 
@@ -15,6 +24,7 @@ function AdminAccountsPage() {
   const [showAdd, setShowAdd] = React.useState(false);
   const [resetTarget, setResetTarget] = React.useState<{ id: number; name: string } | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [pendingId, setPendingId] = React.useState<number | null>(null);
 
   function refresh() {
     return queryClient.invalidateQueries({ queryKey: ["sa-admins"] });
@@ -22,11 +32,15 @@ function AdminAccountsPage() {
 
   async function toggleActive(id: number, active: boolean) {
     setError(null);
+    setPendingId(id);
     try {
       await setAdminActive({ data: { id, active } });
       await refresh();
+      toast.success(active ? "Admin account activated" : "Admin account deactivated");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not update status.");
+    } finally {
+      setPendingId(null);
     }
   }
 
@@ -54,7 +68,7 @@ function AdminAccountsPage() {
       ) : (adminsQuery.data ?? []).length === 0 ? (
         <p className="text-sm text-ink/40">No admin accounts yet — add your first one above.</p>
       ) : (
-        <div className="space-y-2">
+        <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-3">
           {adminsQuery.data!.map((a) => (
             <div key={a.id} className="rounded-2xl bg-card p-4 ring-1 ring-black/5">
               <div className="flex items-center justify-between">
@@ -73,8 +87,10 @@ function AdminAccountsPage() {
               <div className="mt-3 flex flex-wrap gap-2 text-xs">
                 <button
                   onClick={() => toggleActive(a.id, !a.active)}
-                  className="btn-glass-light rounded-full px-3 py-1.5 font-medium text-ink/70"
+                  disabled={pendingId === a.id}
+                  className="btn-glass-light inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-medium text-ink/70 disabled:opacity-60"
                 >
+                  {pendingId === a.id && <Spinner className="size-3.5" />}
                   {a.active ? "Deactivate" : "Activate"}
                 </button>
                 <button
@@ -123,6 +139,7 @@ function AddAdminDialog({ onClose, onCreated }: { onClose: () => void; onCreated
     setError(null);
     try {
       await createAdminAccount({ data: { name, email, password } });
+      toast.success("Admin account created");
       onCreated();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not create admin account.");
@@ -172,8 +189,9 @@ function AddAdminDialog({ onClose, onCreated }: { onClose: () => void; onCreated
           <button
             type="submit"
             disabled={submitting}
-            className="btn-glass flex-1 rounded-full bg-ink px-4 py-2.5 text-sm font-medium text-paper disabled:opacity-60"
+            className="btn-glass flex-1 inline-flex items-center justify-center gap-1.5 rounded-full bg-ink px-4 py-2.5 text-sm font-medium text-paper disabled:opacity-60"
           >
+            {submitting && <Spinner className="size-3.5" />}
             {submitting ? "Adding…" : "Add admin"}
           </button>
         </div>
@@ -201,6 +219,7 @@ function ResetAdminPasswordDialog({
     setError(null);
     try {
       await resetAdminPassword({ data: { id: target.id, newPassword: password } });
+      toast.success("Password reset");
       onDone();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not reset password.");
@@ -235,8 +254,9 @@ function ResetAdminPasswordDialog({
           <button
             type="submit"
             disabled={submitting}
-            className="btn-glass flex-1 rounded-full bg-ink px-4 py-2.5 text-sm font-medium text-paper disabled:opacity-60"
+            className="btn-glass flex-1 inline-flex items-center justify-center gap-1.5 rounded-full bg-ink px-4 py-2.5 text-sm font-medium text-paper disabled:opacity-60"
           >
+            {submitting && <Spinner className="size-3.5" />}
             {submitting ? "Saving…" : "Reset password"}
           </button>
         </div>

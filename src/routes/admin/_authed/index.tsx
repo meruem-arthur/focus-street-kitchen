@@ -1,9 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { getDashboardStats, listOrders } from "@/functions/orders";
+import { outForDeliveryStepLabel } from "@/lib/order-status";
 
 export const Route = createFileRoute("/admin/_authed/")({
-  head: () => ({ meta: [{ title: "Dashboard — FOCUS Staff" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({
+    meta: [{ title: "Dashboard — FOCUS Staff" }, { name: "robots", content: "noindex" }],
+  }),
   component: DashboardPage,
 });
 
@@ -46,9 +49,16 @@ function DashboardPage() {
           Today's Overview
         </h2>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-          <StatCard label="Today's Sales" value={stats ? formatGHS(stats.todaySales) : "—"} highlight />
+          <StatCard
+            label="Today's Sales"
+            value={stats ? formatGHS(stats.todaySales) : "—"}
+            highlight
+          />
           <StatCard label="Orders Today" value={stats?.todayOrders ?? "—"} />
-          <StatCard label="Avg Order Value" value={stats ? formatGHS(stats.averageOrderValue) : "—"} />
+          <StatCard
+            label="Avg Order Value"
+            value={stats ? formatGHS(stats.averageOrderValue) : "—"}
+          />
           <StatCard label="Pending" value={stats?.pending ?? "—"} />
           <StatCard label="Accepted" value={stats?.accepted ?? "—"} />
           <StatCard label="Preparing" value={stats?.preparing ?? "—"} />
@@ -74,7 +84,7 @@ function DashboardPage() {
         ) : orders.length === 0 ? (
           <p className="mt-3 text-sm text-ink/40">No active orders right now.</p>
         ) : (
-          <div className="mt-3 space-y-2">
+          <div className="mt-3 grid gap-2 lg:grid-cols-2 xl:grid-cols-3">
             {orders.map((o) => (
               <Link
                 key={o.id}
@@ -85,14 +95,21 @@ function DashboardPage() {
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-semibold">{o.orderNumber}</p>
                   <span className="rounded-full bg-clay/10 px-2.5 py-1 text-[11px] font-medium text-clay">
-                    {STATUS_LABEL[o.orderStatus] ?? o.orderStatus}
+                    {o.orderStatus === "out_for_delivery"
+                      ? outForDeliveryStepLabel(o.orderType).replace(/^\w/, (c) => c.toUpperCase())
+                      : (STATUS_LABEL[o.orderStatus] ?? o.orderStatus)}
                   </span>
                 </div>
                 <p className="mt-1 text-xs text-ink/50">
                   {o.customerName} · {o.customerPhone} · {o.orderType}
+                  {o.orderType === "delivery" && o.deliveryZoneName
+                    ? ` (${o.deliveryZoneName})`
+                    : ""}
                 </p>
                 <div className="mt-2 flex items-center justify-between text-sm">
-                  <span className="text-ink/60">{o.itemCount} item{o.itemCount === 1 ? "" : "s"}</span>
+                  <span className="text-ink/60">
+                    {o.itemCount} item{o.itemCount === 1 ? "" : "s"}
+                  </span>
                   <span className="font-semibold">{formatGHS(o.total)}</span>
                 </div>
                 <span
@@ -127,7 +144,9 @@ function StatCard({
       }`}
     >
       <p className="text-lg font-semibold">{value}</p>
-      <p className={`mt-0.5 text-[10px] leading-tight ${highlight ? "text-paper/75" : "text-ink/50"}`}>
+      <p
+        className={`mt-0.5 text-[10px] leading-tight ${highlight ? "text-paper/75" : "text-ink/50"}`}
+      >
         {label}
       </p>
     </div>

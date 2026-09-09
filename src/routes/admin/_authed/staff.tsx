@@ -1,6 +1,7 @@
 import * as React from "react";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   listStaffAccounts,
   createStaffAccount,
@@ -10,9 +11,12 @@ import {
   deleteStaffAccount,
 } from "@/functions/staff";
 import { PasswordInput } from "@/components/ui/password-input";
+import { Spinner } from "@/components/ui/spinner";
 
 export const Route = createFileRoute("/admin/_authed/staff")({
-  head: () => ({ meta: [{ title: "Staff — FOCUS Admin" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({
+    meta: [{ title: "Staff — FOCUS Admin" }, { name: "robots", content: "noindex" }],
+  }),
   beforeLoad: ({ context }) => {
     // Server-side authorization is the real guard (see requireStaff calls in
     // functions/staff.ts) — this is just so Staff never even see the screen.
@@ -23,11 +27,15 @@ export const Route = createFileRoute("/admin/_authed/staff")({
 
 function StaffManagementPage() {
   const queryClient = useQueryClient();
-  const staffQuery = useQuery({ queryKey: ["admin-staff-list"], queryFn: () => listStaffAccounts() });
+  const staffQuery = useQuery({
+    queryKey: ["admin-staff-list"],
+    queryFn: () => listStaffAccounts(),
+  });
 
   const [showAdd, setShowAdd] = React.useState(false);
   const [resetTarget, setResetTarget] = React.useState<{ id: number; name: string } | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [pendingId, setPendingId] = React.useState<number | null>(null);
 
   function refresh() {
     return queryClient.invalidateQueries({ queryKey: ["admin-staff-list"] });
@@ -35,22 +43,30 @@ function StaffManagementPage() {
 
   async function toggleActive(id: number, active: boolean) {
     setError(null);
+    setPendingId(id);
     try {
       await setStaffActive({ data: { id, active } });
       await refresh();
+      toast.success(active ? "Staff member activated" : "Staff member deactivated");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not update status.");
+    } finally {
+      setPendingId(null);
     }
   }
 
   async function handleRemove(id: number) {
     if (!confirm("Remove this staff account? They will no longer be able to sign in.")) return;
     setError(null);
+    setPendingId(id);
     try {
       await deleteStaffAccount({ data: { id } });
       await refresh();
+      toast.success("Staff account removed");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not remove account.");
+    } finally {
+      setPendingId(null);
     }
   }
 
@@ -78,7 +94,7 @@ function StaffManagementPage() {
       ) : (staffQuery.data ?? []).length === 0 ? (
         <p className="text-sm text-ink/40">No staff accounts yet — add your first one above.</p>
       ) : (
-        <div className="space-y-2">
+        <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-3">
           {staffQuery.data!.map((s) => (
             <div key={s.id} className="rounded-2xl bg-card p-4 ring-1 ring-black/5">
               <div className="flex items-center justify-between">
@@ -100,8 +116,10 @@ function StaffManagementPage() {
               <div className="mt-3 flex flex-wrap gap-2 text-xs">
                 <button
                   onClick={() => toggleActive(s.id, !s.active)}
-                  className="btn-glass-light rounded-full px-3 py-1.5 font-medium text-ink/70"
+                  disabled={pendingId === s.id}
+                  className="btn-glass-light inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-medium text-ink/70 disabled:opacity-60"
                 >
+                  {pendingId === s.id && <Spinner className="size-3.5" />}
                   {s.active ? "Deactivate" : "Activate"}
                 </button>
                 <button
@@ -112,8 +130,10 @@ function StaffManagementPage() {
                 </button>
                 <button
                   onClick={() => handleRemove(s.id)}
-                  className="btn-glass-light rounded-full px-3 py-1.5 font-medium text-red-700"
+                  disabled={pendingId === s.id}
+                  className="btn-glass-light inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-medium text-red-700 disabled:opacity-60"
                 >
+                  {pendingId === s.id && <Spinner className="size-3.5" />}
                   Remove
                 </button>
               </div>
@@ -156,6 +176,7 @@ function AddStaffDialog({ onClose, onCreated }: { onClose: () => void; onCreated
     setError(null);
     try {
       await createStaffAccount({ data: { name, username, password } });
+      toast.success("Staff account created");
       onCreated();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not create staff account.");
@@ -204,8 +225,9 @@ function AddStaffDialog({ onClose, onCreated }: { onClose: () => void; onCreated
           <button
             type="submit"
             disabled={submitting}
-            className="btn-glass flex-1 rounded-full bg-clay px-4 py-2.5 text-sm font-medium text-paper disabled:opacity-60"
+            className="btn-glass flex-1 inline-flex items-center justify-center gap-1.5 rounded-full bg-clay px-4 py-2.5 text-sm font-medium text-paper disabled:opacity-60"
           >
+            {submitting && <Spinner className="size-3.5" />}
             {submitting ? "Adding…" : "Add staff"}
           </button>
         </div>
@@ -233,6 +255,7 @@ function ResetPasswordDialog({
     setError(null);
     try {
       await resetStaffPassword({ data: { id: target.id, newPassword: password } });
+      toast.success("Password reset");
       onDone();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not reset password.");
@@ -267,8 +290,9 @@ function ResetPasswordDialog({
           <button
             type="submit"
             disabled={submitting}
-            className="btn-glass flex-1 rounded-full bg-clay px-4 py-2.5 text-sm font-medium text-paper disabled:opacity-60"
+            className="btn-glass flex-1 inline-flex items-center justify-center gap-1.5 rounded-full bg-clay px-4 py-2.5 text-sm font-medium text-paper disabled:opacity-60"
           >
+            {submitting && <Spinner className="size-3.5" />}
             {submitting ? "Saving…" : "Reset password"}
           </button>
         </div>

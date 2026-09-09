@@ -3,9 +3,15 @@ import { eq, desc, and, gte, lte } from "drizzle-orm";
 import crypto from "node:crypto";
 import { z } from "zod";
 import { db } from "@/db/client";
-import { menuItems, orders, orderItems, orderStatusHistory, ORDER_STATUS_FLOW } from "@/db/schema";
+import {
+  menuItems,
+  orders,
+  orderItems,
+  orderStatusHistory,
+  deliveryZones,
+  ORDER_STATUS_FLOW,
+} from "@/db/schema";
 import { requireStaff } from "./auth";
-import { getDeliveryFee } from "./settings";
 import { logActivity } from "@/lib/activity-log";
 
 // Orders are day-to-day business/financial data. Super Admin is
@@ -30,6 +36,7 @@ const createOrderSchema = z.object({
   orderType: z.enum(["pickup", "delivery"]),
   deliveryAddress: z.string().max(400).optional(),
   deliveryNotes: z.string().max(400).optional(),
+  deliveryZoneId: z.number().optional(),
   items: z.array(cartItemSchema).min(1),
 });
 
@@ -42,6 +49,26 @@ export const createOrder = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     if (data.orderType === "delivery" && !data.deliveryAddress?.trim()) {
       throw new Error("Delivery address is required for delivery orders.");
+    }
+
+    // The fee is never trusted from the browser — re-look-up the zone and
+    // its current, server-side price so a stale/tampered price can't be sent.
+    let deliveryZoneId: number | null = null;
+    let deliveryZoneName: string | null = null;
+    let deliveryFee = 0;
+    if (data.orderType === "delivery") {
+      if (!data.deliveryZoneId) {
+        throw new Error("Please choose a delivery area.");
+      }
+      const zone = await db.query.deliveryZones.findFirst({
+        where: eq(deliveryZones.id, data.deliveryZoneId),
+      });
+      if (!zone || !zone.active) {
+        throw new Error("That delivery area is no longer available — please pick another.");
+      }
+      deliveryZoneId = zone.id;
+      deliveryZoneName = zone.name;
+      deliveryFee = Number(zone.fee);
     }
 
     // Re-fetch every item server-side. Never trust prices/names from the client.
@@ -67,7 +94,9 @@ export const createOrder = createServerFn({ method: "POST" })
         throw new Error(`Menu item ${cartLine.menuItemId} no longer exists.`);
       }
       if (!item.available) {
-        throw new Error(`"${item.name}" is currently unavailable — please remove it from your cart.`);
+        throw new Error(
+          `"${item.name}" is currently unavailable — please remove it from your cart.`,
+        );
       }
       const unitPrice = Number(item.price);
       const lineSubtotal = unitPrice * cartLine.quantity;
@@ -83,7 +112,6 @@ export const createOrder = createServerFn({ method: "POST" })
       });
     }
 
-    const deliveryFee = data.orderType === "delivery" ? await getDeliveryFee() : 0;
     const total = subtotal + deliveryFee;
     const trackingToken = generateTrackingToken();
 
@@ -99,6 +127,8 @@ export const createOrder = createServerFn({ method: "POST" })
         orderType: data.orderType,
         deliveryAddress: data.orderType === "delivery" ? data.deliveryAddress : null,
         deliveryNotes: data.deliveryNotes || null,
+        deliveryZoneId,
+        deliveryZoneName,
         subtotal: subtotal.toFixed(2),
         deliveryFee: deliveryFee.toFixed(2),
         total: total.toFixed(2),
@@ -154,6 +184,7 @@ export const getOrderByToken = createServerFn({ method: "GET" })
       orderType: order.orderType,
       orderStatus: order.orderStatus,
       paymentStatus: order.paymentStatus,
+      deliveryZoneName: order.deliveryZoneName,
       subtotal: Number(order.subtotal),
       deliveryFee: Number(order.deliveryFee),
       total: Number(order.total),
@@ -173,7 +204,15 @@ export const getOrderByToken = createServerFn({ method: "GET" })
 
 const listOrdersSchema = z.object({
   status: z
-    .enum(["pending", "accepted", "preparing", "ready", "out_for_delivery", "completed", "cancelled"])
+    .enum([
+      "pending",
+      "accepted",
+      "preparing",
+      "ready",
+      "out_for_delivery",
+      "completed",
+      "cancelled",
+    ])
     .optional(),
   orderType: z.enum(["pickup", "delivery"]).optional(),
   paymentStatus: z.enum(["pending", "paid", "failed", "refunded"]).optional(),
@@ -206,6 +245,7 @@ export const listOrders = createServerFn({ method: "GET" })
       customerName: o.customerName,
       customerPhone: o.customerPhone,
       orderType: o.orderType,
+      deliveryZoneName: o.deliveryZoneName,
       orderStatus: o.orderStatus,
       paymentStatus: o.paymentStatus,
       total: Number(o.total),

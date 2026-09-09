@@ -1,11 +1,17 @@
 import * as React from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { resetPasswordWithToken } from "@/functions/auth";
 import { PasswordInput } from "@/components/ui/password-input";
+import { Spinner } from "@/components/ui/spinner";
+import logoIcon from "@/assets/logo-icon.png";
 
 export const Route = createFileRoute("/admin/reset-password/$token")({
   head: () => ({
-    meta: [{ title: "Set New Password — FOCUS Street Kitchen" }, { name: "robots", content: "noindex" }],
+    meta: [
+      { title: "Set New Password — FOCUS Street Kitchen" },
+      { name: "robots", content: "noindex" },
+    ],
   }),
   component: ResetPasswordPage,
 });
@@ -30,6 +36,7 @@ function ResetPasswordPage() {
     try {
       await resetPasswordWithToken({ data: { token, newPassword: password } });
       setDone(true);
+      toast.success("Password updated");
       setTimeout(() => navigate({ to: "/admin/login" }), 2000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -42,9 +49,11 @@ function ResetPasswordPage() {
     <div className="flex min-h-screen items-center justify-center bg-paper px-6 text-ink">
       <div className="w-full max-w-sm space-y-5">
         <div className="text-center">
-          <div className="mx-auto grid size-10 place-items-center rounded-[10px] bg-clay text-paper">
-            <span className="text-base font-semibold leading-none">F</span>
-          </div>
+          <img
+            src={logoIcon}
+            alt="FOCUS Street Kitchen logo"
+            className="mx-auto size-14 rounded-[14px] object-cover ring-1 ring-black/5"
+          />
           <h1 className="mt-3 text-xl font-semibold">Set a new password</h1>
         </div>
 
@@ -70,12 +79,15 @@ function ResetPasswordPage() {
               autoComplete="new-password"
               className="rounded-2xl bg-card py-3 pl-4 text-sm ring-1 ring-black/5 placeholder:text-ink/35 focus:outline-none focus:ring-2 focus:ring-clay/40"
             />
-            {error && <p className="rounded-xl bg-red-50 px-4 py-2.5 text-sm text-red-700">{error}</p>}
+            {error && (
+              <p className="rounded-xl bg-red-50 px-4 py-2.5 text-sm text-red-700">{error}</p>
+            )}
             <button
               type="submit"
               disabled={submitting}
-              className="btn-glass w-full rounded-full bg-clay px-5 py-3 text-sm font-medium text-paper disabled:opacity-60"
+              className="btn-glass inline-flex w-full items-center justify-center gap-2 rounded-full bg-clay px-5 py-3 text-sm font-medium text-paper disabled:opacity-60"
             >
+              {submitting && <Spinner />}
               {submitting ? "Saving…" : "Set new password"}
             </button>
           </form>

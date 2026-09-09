@@ -2,9 +2,12 @@ import * as React from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { listOrders } from "@/functions/orders";
+import { orderStatusPhrase } from "@/lib/order-status";
 
 export const Route = createFileRoute("/admin/_authed/orders/")({
-  head: () => ({ meta: [{ title: "Orders — FOCUS Staff" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({
+    meta: [{ title: "Orders — FOCUS Staff" }, { name: "robots", content: "noindex" }],
+  }),
   component: OrdersHistoryPage,
 });
 
@@ -49,7 +52,7 @@ function OrdersHistoryPage() {
         </Link>
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      <div className="flex flex-wrap gap-2 overflow-x-auto pb-1 lg:overflow-visible">
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value)}
@@ -89,7 +92,7 @@ function OrdersHistoryPage() {
       ) : (ordersQuery.data ?? []).length === 0 ? (
         <p className="text-sm text-ink/40">No orders match those filters.</p>
       ) : (
-        <div className="space-y-2">
+        <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-3">
           {ordersQuery.data!.map((o) => (
             <Link
               key={o.id}
@@ -100,11 +103,18 @@ function OrdersHistoryPage() {
               <div className="flex items-center justify-between">
                 <p className="text-sm font-semibold">{o.orderNumber}</p>
                 <span className="text-xs text-ink/40">
-                  {new Date(o.createdAt).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}
+                  {new Date(o.createdAt).toLocaleString("en-GB", {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })}
                 </span>
               </div>
               <p className="mt-1 text-xs text-ink/50">
-                {o.customerName} · {o.orderType} · {o.orderStatus.replace(/_/g, " ")}
+                {o.customerName} · {o.orderType}
+                {o.orderType === "delivery" && o.deliveryZoneName
+                  ? ` (${o.deliveryZoneName})`
+                  : ""}{" "}
+                · {orderStatusPhrase(o.orderStatus, o.orderType)}
               </p>
               <div className="mt-2 flex items-center justify-between text-sm">
                 <span className="text-ink/60">{o.itemCount} items</span>

@@ -15,7 +15,9 @@ import {
 import { getBusinessAnalytics, getMonthlyComparison } from "@/functions/analytics";
 
 export const Route = createFileRoute("/admin/_authed/analytics")({
-  head: () => ({ meta: [{ title: "Analytics — FOCUS Admin" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({
+    meta: [{ title: "Analytics — FOCUS Admin" }, { name: "robots", content: "noindex" }],
+  }),
   beforeLoad: ({ context }) => {
     if (context.staff.role !== "admin") throw redirect({ to: "/admin" });
   },
@@ -61,7 +63,9 @@ function AnalyticsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-lg font-semibold">Analytics &amp; Reports</h1>
-        <p className="mt-0.5 text-xs text-ink/45">Real numbers, pulled straight from your orders.</p>
+        <p className="mt-0.5 text-xs text-ink/45">
+          Real numbers, pulled straight from your orders.
+        </p>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -100,8 +104,12 @@ function AnalyticsPage() {
         <p className="text-sm text-ink/40">Loading…</p>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-            <StatCard label="Total Sales" value={formatGHS(data.totalSales)} change={data.salesChangePct} />
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+            <StatCard
+              label="Total Sales"
+              value={formatGHS(data.totalSales)}
+              change={data.salesChangePct}
+            />
             <StatCard label="Total Orders" value={data.totalOrders} change={data.ordersChangePct} />
             <StatCard label="Avg Order Value" value={formatGHS(data.averageOrderValue)} />
             <StatCard label="Completed" value={data.completedOrders} />
@@ -109,45 +117,57 @@ function AnalyticsPage() {
             <StatCard label="Pending / Unfinished" value={data.pendingOrders} />
           </div>
 
-          <div className="rounded-2xl bg-card p-4 ring-1 ring-black/5">
-            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-ink/50">
-              Daily Sales
-            </h2>
-            <div className="h-56 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data.dailySeries}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
-                  <XAxis
-                    dataKey="date"
-                    tick={{ fontSize: 10 }}
-                    tickFormatter={(d) => d.slice(5)}
-                  />
-                  <YAxis tick={{ fontSize: 10 }} />
-                  <Tooltip formatter={(v: number) => formatGHS(v)} />
-                  <Bar dataKey="sales" fill="var(--clay)" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="rounded-2xl bg-card p-4 ring-1 ring-black/5">
+              <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-ink/50">
+                Daily Sales
+              </h2>
+              <div className="h-56 w-full lg:h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={data.dailySeries}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
+                    <XAxis
+                      dataKey="date"
+                      tick={{ fontSize: 10 }}
+                      tickFormatter={(d) => d.slice(5)}
+                    />
+                    <YAxis tick={{ fontSize: 10 }} />
+                    <Tooltip formatter={(v: number) => formatGHS(v)} />
+                    <Bar dataKey="sales" fill="var(--clay)" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className="rounded-2xl bg-card p-4 ring-1 ring-black/5">
+              <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-ink/50">
+                Daily Orders
+              </h2>
+              <div className="h-56 w-full lg:h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={data.dailySeries}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
+                    <XAxis
+                      dataKey="date"
+                      tick={{ fontSize: 10 }}
+                      tickFormatter={(d) => d.slice(5)}
+                    />
+                    <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
+                    <Tooltip />
+                    <Line
+                      type="monotone"
+                      dataKey="orders"
+                      stroke="var(--clay)"
+                      strokeWidth={2}
+                      dot={false}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </div>
 
-          <div className="rounded-2xl bg-card p-4 ring-1 ring-black/5">
-            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-ink/50">
-              Daily Orders
-            </h2>
-            <div className="h-56 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={data.dailySeries}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
-                  <XAxis dataKey="date" tick={{ fontSize: 10 }} tickFormatter={(d) => d.slice(5)} />
-                  <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="orders" stroke="var(--clay)" strokeWidth={2} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="rounded-2xl bg-card p-4 ring-1 ring-black/5">
               <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink/50">
                 Order Status Breakdown
@@ -175,28 +195,28 @@ function AnalyticsPage() {
                 <span className="font-medium">{data.deliveryCount}</span>
               </div>
             </div>
-          </div>
 
-          <div className="rounded-2xl bg-card p-4 ring-1 ring-black/5">
-            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink/50">
-              Best-Selling Items
-            </h2>
-            {data.bestSellers.length === 0 ? (
-              <p className="text-sm text-ink/40">No sales in this period yet.</p>
-            ) : (
-              <div className="space-y-1.5">
-                {data.bestSellers.map((item, i) => (
-                  <div key={item.name} className="flex justify-between text-sm">
-                    <span className="text-ink/70">
-                      {i + 1}. {item.name}
-                    </span>
-                    <span className="font-medium">
-                      {item.quantity} sold · {formatGHS(item.revenue)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
+            <div className="rounded-2xl bg-card p-4 ring-1 ring-black/5 sm:col-span-2 lg:col-span-1">
+              <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink/50">
+                Best-Selling Items
+              </h2>
+              {data.bestSellers.length === 0 ? (
+                <p className="text-sm text-ink/40">No sales in this period yet.</p>
+              ) : (
+                <div className="space-y-1.5">
+                  {data.bestSellers.map((item, i) => (
+                    <div key={item.name} className="flex justify-between text-sm">
+                      <span className="text-ink/70">
+                        {i + 1}. {item.name}
+                      </span>
+                      <span className="font-medium">
+                        {item.quantity} sold · {formatGHS(item.revenue)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </>
       )}
@@ -251,7 +271,9 @@ function StatCard({
       <p className="text-lg font-semibold">{value}</p>
       <p className="mt-0.5 text-[10px] leading-tight text-ink/50">{label}</p>
       {change !== undefined && change !== null && (
-        <p className={`mt-0.5 text-[10px] font-medium ${change >= 0 ? "text-sage" : "text-red-600"}`}>
+        <p
+          className={`mt-0.5 text-[10px] font-medium ${change >= 0 ? "text-sage" : "text-red-600"}`}
+        >
           {change >= 0 ? "▲" : "▼"} {Math.abs(change).toFixed(1)}% vs prior period
         </p>
       )}

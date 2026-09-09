@@ -148,12 +148,30 @@ export const menuItems = pgTable("menu_items", {
 });
 
 // ─────────────────────────────────────────────────────────────
-// App Settings (delivery fee etc — editable without a redeploy)
+// App Settings (legacy key/value store — superseded for delivery
+// pricing by the per-area `delivery_zones` table below, kept here
+// in case other settings get added later)
 // ─────────────────────────────────────────────────────────────
 
 export const settings = pgTable("settings", {
   key: varchar("key", { length: 80 }).primaryKey(),
   value: text("value").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ─────────────────────────────────────────────────────────────
+// Delivery Zones (Admin/Super Admin set a fee per delivery area,
+// e.g. "Kojokrom" — GH₵15, "Anaji" — GH₵10, "BU Environs" — GH₵5,
+// instead of one flat fee for every delivery order)
+// ─────────────────────────────────────────────────────────────
+
+export const deliveryZones = pgTable("delivery_zones", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 120 }).notNull(),
+  fee: numeric("fee", { precision: 10, scale: 2 }).notNull(),
+  active: boolean("active").notNull().default(true),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -175,6 +193,15 @@ export const orders = pgTable("orders", {
   orderType: orderTypeEnum("order_type").notNull(),
   deliveryAddress: text("delivery_address"),
   deliveryNotes: text("delivery_notes"),
+  // Which delivery area (and its fee) this order was placed under. Nullable
+  // so pickup orders (and old rows from before zones existed) are unaffected;
+  // set null on zone deletion since deliveryZoneName below already snapshots
+  // the area's name/price at order time, so history stays correct even if
+  // the zone is later renamed or removed.
+  deliveryZoneId: integer("delivery_zone_id").references(() => deliveryZones.id, {
+    onDelete: "set null",
+  }),
+  deliveryZoneName: varchar("delivery_zone_name", { length: 120 }),
 
   subtotal: numeric("subtotal", { precision: 10, scale: 2 }).notNull(),
   deliveryFee: numeric("delivery_fee", { precision: 10, scale: 2 }).notNull().default("0"),
@@ -261,10 +288,18 @@ export const menuItemsRelations = relations(menuItems, ({ one }) => ({
   }),
 }));
 
-export const ordersRelations = relations(orders, ({ many }) => ({
+export const ordersRelations = relations(orders, ({ one, many }) => ({
   items: many(orderItems),
   payments: many(payments),
   statusHistory: many(orderStatusHistory),
+  deliveryZone: one(deliveryZones, {
+    fields: [orders.deliveryZoneId],
+    references: [deliveryZones.id],
+  }),
+}));
+
+export const deliveryZonesRelations = relations(deliveryZones, ({ many }) => ({
+  orders: many(orders),
 }));
 
 export const orderItemsRelations = relations(orderItems, ({ one }) => ({
@@ -303,6 +338,7 @@ export type OrderStatusHistoryRow = typeof orderStatusHistory.$inferSelect;
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
 export type ActivityLogRow = typeof activityLog.$inferSelect;
 export type Promotion = typeof promotions.$inferSelect;
+export type DeliveryZone = typeof deliveryZones.$inferSelect;
 
 export const STAFF_ROLES = ["super_admin", "admin", "staff"] as const;
 export type StaffRole = (typeof STAFF_ROLES)[number];

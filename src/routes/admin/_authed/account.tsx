@@ -1,7 +1,9 @@
 import * as React from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { changeOwnPassword } from "@/functions/auth";
 import { PasswordInput } from "@/components/ui/password-input";
+import { Spinner } from "@/components/ui/spinner";
 
 export const Route = createFileRoute("/admin/_authed/account")({
   head: () => ({ meta: [{ title: "My Account — FOCUS" }, { name: "robots", content: "noindex" }] }),
@@ -29,6 +31,7 @@ function AccountPage() {
     try {
       await changeOwnPassword({ data: { currentPassword, newPassword } });
       setSuccess(true);
+      toast.success("Password updated");
       setCurrentPassword("");
       setNewPassword("");
       setConfirm("");
@@ -82,8 +85,9 @@ function AccountPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="btn-glass w-full rounded-full bg-clay px-4 py-2.5 text-sm font-medium text-paper disabled:opacity-60"
+            className="btn-glass inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-clay px-4 py-2.5 text-sm font-medium text-paper disabled:opacity-60"
           >
+            {submitting && <Spinner className="size-3.5" />}
             {submitting ? "Saving…" : "Update password"}
           </button>
         </form>

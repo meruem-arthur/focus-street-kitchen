@@ -57,7 +57,7 @@
   --ink: oklch(0.133 0.084 62.7);
   --paper: oklch(0.946 0.076 90.1);
   --card: oklch(0.977 0.043 90.5);
-  --clay: oklch(0.444 0.600 47.4);
+  --clay: oklch(0.444 0.6 47.4);
   --amber: oklch(0.632 0.567 69.8);
   --sage: oklch(0.483 0.172 118.1);
 
@@ -87,13 +87,36 @@
     border-color: var(--color-border);
   }
 
+  html {
+    /* A handful of pages use slightly-oversized blurred background
+       images (see PageBackground-style treatments) — keep those from
+       ever introducing a horizontal scrollbar on narrow screens. */
+    overflow-x: hidden;
+  }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-body);
+    overflow-x: hidden;
   }
 
-  h1, h2, h3, h4 {
+  /* iOS Safari auto-zooms the page when a focused input's font-size is
+     under 16px. Most of our inputs use text-xs/text-sm (12–14px) for
+     visual consistency, so bump the effective size back up to 16px
+     only on small screens, where the zoom is disruptive. */
+  @media (max-width: 640px) {
+    input,
+    select,
+    textarea {
+      font-size: 16px;
+    }
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
     font-family: var(--font-display);
   }
 }
@@ -160,7 +183,9 @@
     0 1px 0 0 color-mix(in oklch, white 60%, transparent) inset,
     0 4px 14px -8px color-mix(in oklch, var(--ink) 25%, transparent);
   border: 1px solid color-mix(in oklch, white 40%, transparent);
-  transition: filter 0.15s ease, transform 0.15s ease;
+  transition:
+    filter 0.15s ease,
+    transform 0.15s ease;
 }
 .btn-glass-light:hover {
   filter: brightness(1.03);
@@ -170,15 +195,35 @@
 }
 
 @keyframes steam {
-  0% { transform: translateY(8px); opacity: 0; }
-  40% { opacity: 0.55; }
-  100% { transform: translateY(-46px); opacity: 0; }
+  0% {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  40% {
+    opacity: 0.55;
+  }
+  100% {
+    transform: translateY(-46px);
+    opacity: 0;
+  }
 }
-.steam { animation: steam 4.5s ease-in-out infinite; }
-.steam-2 { animation-delay: 1.4s; }
-.steam-3 { animation-delay: 2.6s; }
+.steam {
+  animation: steam 4.5s ease-in-out infinite;
+}
+.steam-2 {
+  animation-delay: 1.4s;
+}
+.steam-3 {
+  animation-delay: 2.6s;
+}
 
 @keyframes rise {
-  from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
