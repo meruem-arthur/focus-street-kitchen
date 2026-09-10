@@ -2,6 +2,14 @@ import * as React from "react";
 
 export type CartLine = {
   menuItemId: number;
+  // Set when this line is a specific price option of the dish (e.g. the
+  // GH₵100 Loaded Fries) rather than a simple single-price item. Two lines
+  // for the same dish but different variants are kept as separate lines —
+  // e.g. 2× GH₵70 Loaded Fries and 3× GH₵100 Loaded Fries at once.
+  variantId?: number;
+  // Display text for the chosen option, e.g. "GH₵100" or "Full" — already
+  // resolved (falls back to the price) so the UI never has to guess.
+  variantLabel?: string;
   name: string;
   price: number; // snapshot for display only — server re-checks the real price at checkout
   quantity: number;
@@ -17,15 +25,19 @@ type CartContextValue = {
   itemCount: number;
   subtotal: number;
   addItem: (item: Omit<CartLine, "quantity">, quantity?: number) => void;
-  updateQuantity: (menuItemId: number, quantity: number) => void;
-  removeItem: (menuItemId: number) => void;
-  setInstructions: (menuItemId: number, note: string) => void;
+  updateQuantity: (menuItemId: number, quantity: number, variantId?: number) => void;
+  removeItem: (menuItemId: number, variantId?: number) => void;
+  setInstructions: (menuItemId: number, note: string, variantId?: number) => void;
   clear: () => void;
 };
 
 const STORAGE_KEY = "focus_cart_v1";
 
 const CartContext = React.createContext<CartContextValue | null>(null);
+
+function sameLine(line: CartLine, menuItemId: number, variantId?: number): boolean {
+  return line.menuItemId === menuItemId && (line.variantId ?? null) === (variantId ?? null);
+}
 
 function loadInitial(): CartState {
   if (typeof window === "undefined") return { lines: [] };
@@ -54,11 +66,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const addItem = React.useCallback<CartContextValue["addItem"]>((item, quantity = 1) => {
     setState((prev) => {
-      const existing = prev.lines.find((l) => l.menuItemId === item.menuItemId);
+      const existing = prev.lines.find((l) => sameLine(l, item.menuItemId, item.variantId));
       if (existing) {
         return {
           lines: prev.lines.map((l) =>
-            l.menuItemId === item.menuItemId ? { ...l, quantity: l.quantity + quantity } : l,
+            sameLine(l, item.menuItemId, item.variantId)
+              ? { ...l, quantity: l.quantity + quantity }
+              : l,
           ),
         };
       }
@@ -66,26 +80,38 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const updateQuantity = React.useCallback<CartContextValue["updateQuantity"]>((menuItemId, quantity) => {
-    setState((prev) => {
-      if (quantity <= 0) {
-        return { lines: prev.lines.filter((l) => l.menuItemId !== menuItemId) };
-      }
-      return {
-        lines: prev.lines.map((l) => (l.menuItemId === menuItemId ? { ...l, quantity } : l)),
-      };
-    });
-  }, []);
+  const updateQuantity = React.useCallback<CartContextValue["updateQuantity"]>(
+    (menuItemId, quantity, variantId) => {
+      setState((prev) => {
+        if (quantity <= 0) {
+          return { lines: prev.lines.filter((l) => !sameLine(l, menuItemId, variantId)) };
+        }
+        return {
+          lines: prev.lines.map((l) =>
+            sameLine(l, menuItemId, variantId) ? { ...l, quantity } : l,
+          ),
+        };
+      });
+    },
+    [],
+  );
 
-  const removeItem = React.useCallback<CartContextValue["removeItem"]>((menuItemId) => {
-    setState((prev) => ({ lines: prev.lines.filter((l) => l.menuItemId !== menuItemId) }));
-  }, []);
-
-  const setInstructions = React.useCallback<CartContextValue["setInstructions"]>((menuItemId, note) => {
+  const removeItem = React.useCallback<CartContextValue["removeItem"]>((menuItemId, variantId) => {
     setState((prev) => ({
-      lines: prev.lines.map((l) => (l.menuItemId === menuItemId ? { ...l, specialInstructions: note } : l)),
+      lines: prev.lines.filter((l) => !sameLine(l, menuItemId, variantId)),
     }));
   }, []);
+
+  const setInstructions = React.useCallback<CartContextValue["setInstructions"]>(
+    (menuItemId, note, variantId) => {
+      setState((prev) => ({
+        lines: prev.lines.map((l) =>
+          sameLine(l, menuItemId, variantId) ? { ...l, specialInstructions: note } : l,
+        ),
+      }));
+    },
+    [],
+  );
 
   const clear = React.useCallback(() => setState({ lines: [] }), []);
 

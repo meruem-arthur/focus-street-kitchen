@@ -138,13 +138,35 @@ export const menuItems = pgTable("menu_items", {
     .references(() => categories.id, { onDelete: "cascade" }),
   name: varchar("name", { length: 160 }).notNull(),
   description: text("description"),
-  // stored in GHS as a decimal, e.g. 70.00
-  price: numeric("price", { precision: 10, scale: 2 }).notNull(),
+  // stored in GHS as a decimal, e.g. 70.00. Null when this item instead has
+  // price options in `menu_item_variants` below (e.g. Loaded Fries GH₵70/100)
+  // — an item has exactly one or the other, never both.
+  price: numeric("price", { precision: 10, scale: 2 }),
   imageUrl: text("image_url"),
   available: boolean("available").notNull().default(true),
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ─────────────────────────────────────────────────────────────
+// Menu Item Variants — price options for dishes FOCUS sells at more
+// than one size/portion (e.g. Loaded Fries GH₵70 or GH₵100, Banku
+// Tilapia "Half"/"Full"). FOCUS mostly judges the portion to prepare
+// from the price itself rather than naming sizes, so `label` is
+// optional: leave it blank to just show the price as the choice, or
+// set it when there's a real printed name like "Half"/"Full".
+// ─────────────────────────────────────────────────────────────
+
+export const menuItemVariants = pgTable("menu_item_variants", {
+  id: serial("id").primaryKey(),
+  menuItemId: integer("menu_item_id")
+    .notNull()
+    .references(() => menuItems.id, { onDelete: "cascade" }),
+  label: varchar("label", { length: 60 }),
+  price: numeric("price", { precision: 10, scale: 2 }).notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 // ─────────────────────────────────────────────────────────────
@@ -227,6 +249,14 @@ export const orderItems = pgTable("order_items", {
   menuItemId: integer("menu_item_id").references(() => menuItems.id, {
     onDelete: "set null",
   }),
+  // Which price option was ordered, if the item has any (see
+  // menu_item_variants above). Snapshotted the same way as everything else
+  // here so historical orders stay correct even if the option is later
+  // renamed, repriced, or removed.
+  variantId: integer("variant_id").references(() => menuItemVariants.id, {
+    onDelete: "set null",
+  }),
+  variantLabel: varchar("variant_label", { length: 60 }),
   // snapshotted at order time so historical orders stay correct
   // even if the menu item is later renamed, repriced, or deleted
   itemName: varchar("item_name", { length: 160 }).notNull(),
@@ -281,10 +311,18 @@ export const categoriesRelations = relations(categories, ({ many }) => ({
   items: many(menuItems),
 }));
 
-export const menuItemsRelations = relations(menuItems, ({ one }) => ({
+export const menuItemsRelations = relations(menuItems, ({ one, many }) => ({
   category: one(categories, {
     fields: [menuItems.categoryId],
     references: [categories.id],
+  }),
+  variants: many(menuItemVariants),
+}));
+
+export const menuItemVariantsRelations = relations(menuItemVariants, ({ one }) => ({
+  menuItem: one(menuItems, {
+    fields: [menuItemVariants.menuItemId],
+    references: [menuItems.id],
   }),
 }));
 
@@ -305,6 +343,10 @@ export const deliveryZonesRelations = relations(deliveryZones, ({ many }) => ({
 export const orderItemsRelations = relations(orderItems, ({ one }) => ({
   order: one(orders, { fields: [orderItems.orderId], references: [orders.id] }),
   menuItem: one(menuItems, { fields: [orderItems.menuItemId], references: [menuItems.id] }),
+  variant: one(menuItemVariants, {
+    fields: [orderItems.variantId],
+    references: [menuItemVariants.id],
+  }),
 }));
 
 export const paymentsRelations = relations(payments, ({ one }) => ({
@@ -331,6 +373,7 @@ export const activityLogRelations = relations(activityLog, ({ one }) => ({
 export type Staff = typeof staff.$inferSelect;
 export type Category = typeof categories.$inferSelect;
 export type MenuItem = typeof menuItems.$inferSelect;
+export type MenuItemVariant = typeof menuItemVariants.$inferSelect;
 export type Order = typeof orders.$inferSelect;
 export type OrderItem = typeof orderItems.$inferSelect;
 export type Payment = typeof payments.$inferSelect;

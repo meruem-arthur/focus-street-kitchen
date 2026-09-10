@@ -27,10 +27,18 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
         ) : (
           <div className="space-y-3 px-4 pb-4">
             {cart.lines.map((line) => (
-              <div key={line.menuItemId} className="rounded-2xl bg-card p-3 ring-1 ring-black/5">
+              <div
+                key={`${line.menuItemId}-${line.variantId ?? "base"}`}
+                className="rounded-2xl bg-card p-3 ring-1 ring-black/5"
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{line.name}</p>
+                    <p className="truncate text-sm font-medium">
+                      {line.name}
+                      {line.variantLabel && (
+                        <span className="text-ink/50"> — {line.variantLabel}</span>
+                      )}
+                    </p>
                     <p className="mt-0.5 text-xs text-ink/50">{formatGHS(line.price)} each</p>
                   </div>
                   <p className="shrink-0 text-sm font-semibold">
@@ -42,7 +50,9 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                   <div className="flex items-center gap-2 rounded-full bg-paper px-1 py-1 ring-1 ring-black/5">
                     <button
                       type="button"
-                      onClick={() => cart.updateQuantity(line.menuItemId, line.quantity - 1)}
+                      onClick={() =>
+                        cart.updateQuantity(line.menuItemId, line.quantity - 1, line.variantId)
+                      }
                       className="grid size-7 place-items-center rounded-full text-sm font-medium text-ink/70 hover:bg-ink/5"
                       aria-label={`Decrease ${line.name} quantity`}
                     >
@@ -51,7 +61,9 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                     <span className="w-5 text-center text-sm font-medium">{line.quantity}</span>
                     <button
                       type="button"
-                      onClick={() => cart.updateQuantity(line.menuItemId, line.quantity + 1)}
+                      onClick={() =>
+                        cart.updateQuantity(line.menuItemId, line.quantity + 1, line.variantId)
+                      }
                       className="grid size-7 place-items-center rounded-full text-sm font-medium text-ink/70 hover:bg-ink/5"
                       aria-label={`Increase ${line.name} quantity`}
                     >
@@ -60,7 +72,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                   </div>
                   <button
                     type="button"
-                    onClick={() => cart.removeItem(line.menuItemId)}
+                    onClick={() => cart.removeItem(line.menuItemId, line.variantId)}
                     className="text-xs font-medium text-clay hover:underline"
                   >
                     Remove
@@ -70,7 +82,9 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                 <input
                   type="text"
                   value={line.specialInstructions ?? ""}
-                  onChange={(e) => cart.setInstructions(line.menuItemId, e.target.value)}
+                  onChange={(e) =>
+                    cart.setInstructions(line.menuItemId, e.target.value, line.variantId)
+                  }
                   placeholder="Special instructions (e.g. no onions)"
                   maxLength={200}
                   className="mt-2 w-full rounded-xl bg-paper px-3 py-2 text-xs ring-1 ring-black/5 placeholder:text-ink/35 focus:outline-none focus:ring-2 focus:ring-clay/40"

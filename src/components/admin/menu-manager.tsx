@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Spinner } from "@/components/ui/spinner";
 import {
@@ -28,6 +28,13 @@ function slugify(value: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-+|-+$)/g, "")
     .slice(0, 60);
+}
+
+// Carries an item's existing price options through a partial update (e.g.
+// just changing the photo) so that update doesn't accidentally wipe them —
+// saveMenuItem always replaces the full price/variants state it's given.
+function variantsPayload(item: PublicMenuItem) {
+  return item.variants.map((v) => ({ label: v.label, price: v.price }));
 }
 
 type CategoryDialogState = { mode: "add" } | { mode: "edit"; category: PublicCategory };
@@ -60,34 +67,40 @@ export function MenuManager() {
     }
   }
 
+  /** Quick inline price edit — only ever used for simple (non-variant) items. */
   async function savePrice(
     id: number,
     categoryId: number,
     name: string,
     price: number,
     available: boolean,
+    imageUrl: string | null,
   ) {
     setListError(null);
     try {
-      await saveMenuItem({ data: { id, categoryId, name, price, available } });
+      await saveMenuItem({ data: { id, categoryId, name, price, available, imageUrl } });
       await refresh();
     } catch (err) {
       setListError(err instanceof Error ? err.message : "Could not update the price.");
     }
   }
 
-  async function saveImageUrl(
-    id: number,
-    categoryId: number,
-    name: string,
-    price: number,
-    available: boolean,
-    imageUrl: string,
-  ) {
+  async function saveImageUrl(item: PublicMenuItem, categoryId: number, imageUrl: string) {
     setListError(null);
     try {
       await saveMenuItem({
-        data: { id, categoryId, name, price, available, imageUrl: imageUrl.trim() || null },
+        data: {
+          id: item.id,
+          categoryId,
+          name: item.name,
+          available: item.available,
+          imageUrl: imageUrl.trim() || null,
+          // Pass whichever pricing shape the item currently uses straight
+          // through unchanged — this call is only meant to touch the photo.
+          ...(item.variants.length > 0
+            ? { variants: variantsPayload(item) }
+            : { price: item.price! }),
+        },
       });
       await refresh();
     } catch (err) {
@@ -96,7 +109,7 @@ export function MenuManager() {
   }
 
   async function handleFileSelect(
-    item: { id: number; name: string; price: number; available: boolean },
+    item: PublicMenuItem,
     categoryId: number,
     file: File | undefined,
   ) {
@@ -109,7 +122,7 @@ export function MenuManager() {
     setUploadingId(item.id);
     try {
       const url = await uploadImageToCloudinary(file);
-      await saveImageUrl(item.id, categoryId, item.name, item.price, item.available, url);
+      await saveImageUrl(item, categoryId, url);
       toast.success("Photo uploaded");
     } catch (err) {
       setUploadErrors((prev) => ({
@@ -164,7 +177,8 @@ export function MenuManager() {
           <h1 className="text-lg font-semibold">Menu Management</h1>
           <p className="mt-0.5 text-xs text-ink/45">
             Add categories, add or remove dishes under them, toggle availability, and edit prices
-            and photos.
+            and photos. A dish can have one price, or several price options (e.g. GH₵70/100) that
+            customers choose between.
           </p>
         </div>
         <button
@@ -253,18 +267,34 @@ export function MenuManager() {
                     {item.description && (
                       <p className="truncate text-[11px] text-ink/40">{item.description}</p>
                     )}
-                    <input
-                      type="number"
-                      step="0.01"
-                      defaultValue={item.price}
-                      onBlur={(e) => {
-                        const val = Number(e.target.value);
-                        if (!Number.isNaN(val) && val > 0 && val !== item.price) {
-                          savePrice(item.id, cat.id, item.name, val, item.available);
-                        }
-                      }}
-                      className="mt-1 w-24 rounded-lg bg-paper px-2 py-1 text-xs ring-1 ring-black/10"
-                    />
+                    {item.price !== null ? (
+                      <input
+                        type="number"
+                        step="0.01"
+                        defaultValue={item.price}
+                        onBlur={(e) => {
+                          const val = Number(e.target.value);
+                          if (!Number.isNaN(val) && val > 0 && val !== item.price) {
+                            savePrice(
+                              item.id,
+                              cat.id,
+                              item.name,
+                              val,
+                              item.available,
+                              item.imageUrl,
+                            );
+                          }
+                        }}
+                        className="mt-1 w-24 rounded-lg bg-paper px-2 py-1 text-xs ring-1 ring-black/10"
+                      />
+                    ) : (
+                      <button
+                        onClick={() => setItemDialog({ mode: "edit", categoryId: cat.id, item })}
+                        className="mt-1 inline-flex items-center gap-1 rounded-lg bg-paper px-2 py-1 text-[11px] font-medium text-clay ring-1 ring-black/10"
+                      >
+                        {item.variants.length} price options — edit to change
+                      </button>
+                    )}
                     <input
                       key={item.imageUrl ?? ""}
                       type="url"
@@ -273,7 +303,7 @@ export function MenuManager() {
                       onBlur={(e) => {
                         const val = e.target.value;
                         if (val !== (item.imageUrl ?? "")) {
-                          saveImageUrl(item.id, cat.id, item.name, item.price, item.available, val);
+                          saveImageUrl(item, cat.id, val);
                         }
                       }}
                       className="mt-1 w-full rounded-lg bg-paper px-2 py-1 text-xs ring-1 ring-black/10"
@@ -484,6 +514,13 @@ function CategoryDialog({
   );
 }
 
+type VariantRow = { key: number; label: string; price: string };
+let variantRowKeySeq = 0;
+function newVariantRow(label = "", price = ""): VariantRow {
+  variantRowKeySeq += 1;
+  return { key: variantRowKeySeq, label, price };
+}
+
 function ItemDialog({
   state,
   categories,
@@ -499,23 +536,54 @@ function ItemDialog({
   const [categoryId, setCategoryId] = React.useState<number>(state.categoryId);
   const [name, setName] = React.useState(editing?.name ?? "");
   const [description, setDescription] = React.useState(editing?.description ?? "");
-  const [price, setPrice] = React.useState(editing ? String(editing.price) : "");
+  const [hasVariants, setHasVariants] = React.useState((editing?.variants.length ?? 0) > 0);
+  const [price, setPrice] = React.useState(
+    editing && editing.price !== null ? String(editing.price) : "",
+  );
+  const [variantRows, setVariantRows] = React.useState<VariantRow[]>(() =>
+    editing && editing.variants.length > 0
+      ? editing.variants.map((v) => newVariantRow(v.label ?? "", String(v.price)))
+      : [newVariantRow(), newVariantRow()],
+  );
   const [imageUrl, setImageUrl] = React.useState(editing?.imageUrl ?? "");
   const [available, setAvailable] = React.useState(editing?.available ?? true);
   const [error, setError] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
 
+  function updateVariantRow(key: number, patch: Partial<VariantRow>) {
+    setVariantRows((rows) => rows.map((r) => (r.key === key ? { ...r, ...patch } : r)));
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const finalName = name.trim();
-    const parsedPrice = Number(price);
     if (!finalName) {
       setError("Please enter a dish name.");
       return;
     }
-    if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) {
-      setError("Please enter a valid price greater than 0.");
-      return;
+
+    let payload: { price?: number; variants?: { label?: string | null; price: number }[] };
+
+    if (hasVariants) {
+      const parsedVariants = variantRows
+        .filter((r) => r.price.trim() !== "")
+        .map((r) => ({ label: r.label.trim() || null, price: Number(r.price) }));
+      if (parsedVariants.some((v) => !Number.isFinite(v.price) || v.price <= 0)) {
+        setError("Each price option needs a valid price greater than 0.");
+        return;
+      }
+      if (parsedVariants.length < 2) {
+        setError("Add at least 2 price options (e.g. GH₵70 and GH₵100).");
+        return;
+      }
+      payload = { variants: parsedVariants };
+    } else {
+      const parsedPrice = Number(price);
+      if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) {
+        setError("Please enter a valid price greater than 0.");
+        return;
+      }
+      payload = { price: parsedPrice };
     }
 
     setSubmitting(true);
@@ -527,9 +595,9 @@ function ItemDialog({
           categoryId,
           name: finalName,
           description: description.trim() || null,
-          price: parsedPrice,
           imageUrl: imageUrl.trim() || null,
           available,
+          ...payload,
         },
       });
       toast.success(editing ? "Item updated" : "Item added");
@@ -542,7 +610,7 @@ function ItemDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-30 flex items-end justify-center bg-black/30 p-0 sm:items-center sm:p-4">
+    <div className="fixed inset-0 z-30 flex items-end justify-center overflow-y-auto bg-black/30 p-0 sm:items-center sm:p-4">
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-sm space-y-3 rounded-t-3xl bg-paper p-5 sm:rounded-3xl"
@@ -577,16 +645,73 @@ function ItemDialog({
           rows={2}
           className="w-full rounded-2xl bg-card px-4 py-2.5 text-sm ring-1 ring-black/5 placeholder:text-ink/35"
         />
-        <input
-          required
-          type="number"
-          step="0.01"
-          min="0.01"
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-          placeholder="Price (GHS)"
-          className="w-full rounded-2xl bg-card px-4 py-2.5 text-sm ring-1 ring-black/5 placeholder:text-ink/35"
-        />
+
+        <label className="flex items-center gap-2 text-xs text-ink/70">
+          <input
+            type="checkbox"
+            checked={hasVariants}
+            onChange={(e) => setHasVariants(e.target.checked)}
+          />
+          This dish has multiple prices (e.g. GH₵70 or GH₵100 — customer picks one)
+        </label>
+
+        {hasVariants ? (
+          <div className="space-y-2 rounded-2xl bg-card p-3 ring-1 ring-black/5">
+            {variantRows.map((row, i) => (
+              <div key={row.key} className="flex items-center gap-1.5">
+                <input
+                  value={row.label}
+                  onChange={(e) => updateVariantRow(row.key, { label: e.target.value })}
+                  placeholder={`Label ${i + 1} (optional, e.g. "Half")`}
+                  className="min-w-0 flex-1 rounded-xl bg-paper px-3 py-2 text-xs ring-1 ring-black/10 placeholder:text-ink/35"
+                />
+                <input
+                  required
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  value={row.price}
+                  onChange={(e) => updateVariantRow(row.key, { price: e.target.value })}
+                  placeholder="Price"
+                  className="w-20 shrink-0 rounded-xl bg-paper px-3 py-2 text-xs ring-1 ring-black/10 placeholder:text-ink/35"
+                />
+                <button
+                  type="button"
+                  onClick={() => setVariantRows((rows) => rows.filter((r) => r.key !== row.key))}
+                  disabled={variantRows.length <= 2}
+                  aria-label="Remove price option"
+                  className="shrink-0 text-ink/35 hover:text-red-700 disabled:opacity-30"
+                >
+                  <X className="size-3.5" />
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => setVariantRows((rows) => [...rows, newVariantRow()])}
+              className="text-xs font-medium text-clay"
+            >
+              + Add another price option
+            </button>
+            <p className="text-[10px] text-ink/40">
+              Leave the label blank to just show the price itself as the choice — that's how most of
+              FOCUS's menu already works. Only fill it in for a real printed name, like "Half" /
+              "Full".
+            </p>
+          </div>
+        ) : (
+          <input
+            required
+            type="number"
+            step="0.01"
+            min="0.01"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            placeholder="Price (GHS)"
+            className="w-full rounded-2xl bg-card px-4 py-2.5 text-sm ring-1 ring-black/5 placeholder:text-ink/35"
+          />
+        )}
+
         <input
           type="url"
           value={imageUrl ?? ""}

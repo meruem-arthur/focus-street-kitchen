@@ -3,11 +3,18 @@
 // `bun run db:seed` inserts. Once seeded, edit menu items via the DB / admin
 // tools instead, or re-run the seed against a fresh database.
 
+export type SeedVariant = {
+  label?: string; // optional — leave unset to just show the price as the choice
+  price: number; // GHS, decimal
+};
+
 export type SeedItem = {
   name: string;
-  price: number; // GHS, decimal
   desc?: string;
-};
+} & (
+  | { price: number; variants?: undefined } // single price
+  | { price?: undefined; variants: SeedVariant[] } // 2+ price options
+);
 
 export type SeedCategory = {
   slug: string;
@@ -24,13 +31,28 @@ export const MENU_SEED: SeedCategory[] = [
     blurb: "Signature plates, plated generously.",
     layout: "list",
     items: [
-      { name: "Focus Special Rice", price: 70, desc: "Chicken, beef, gizzard, sausage, octopus, egg, veggies" },
-      { name: "Seafood Fried Rice", price: 70, desc: "Octopus, fish, shrimps / prawns" },
-      { name: "Loaded Fries", price: 70, desc: "Chicken gizzard, fries, sausage, meat, veggies, cheese" },
-      { name: "Prawns Special Rice", price: 70 },
-      { name: "Seafood Spaghetti", price: 70 },
-      { name: "Seafood Noodles", price: 70 },
-      { name: "Focus Special Noodles & Spaghetti", price: 70 },
+      {
+        name: "Focus Special Rice",
+        variants: [{ price: 70 }, { price: 100 }],
+        desc: "Chicken, beef, gizzard, sausage, octopus, egg, veggies",
+      },
+      {
+        name: "Seafood Fried Rice",
+        variants: [{ price: 70 }, { price: 100 }],
+        desc: "Octopus, fish, shrimps / prawns",
+      },
+      {
+        name: "Loaded Fries",
+        variants: [{ price: 70 }, { price: 100 }],
+        desc: "Chicken gizzard, fries, sausage, meat, veggies, cheese",
+      },
+      { name: "Prawns Special Rice", variants: [{ price: 70 }, { price: 100 }] },
+      { name: "Seafood Spaghetti", variants: [{ price: 70 }, { price: 100 }] },
+      { name: "Seafood Noodles", variants: [{ price: 70 }, { price: 100 }] },
+      {
+        name: "Focus Special Noodles & Spaghetti",
+        variants: [{ price: 70 }, { price: 100 }],
+      },
     ],
   },
   {
@@ -40,7 +62,9 @@ export const MENU_SEED: SeedCategory[] = [
     layout: "grid",
     items: [
       { name: "Banku", price: 5 },
-      { name: "Okro", price: 5 },
+      // NOTE: read as 10/15 off a blurry phone photo — double-check the real
+      // numbers on the printed menu and adjust via Menu Management if off.
+      { name: "Okro", variants: [{ price: 10 }, { price: 15 }] },
       { name: "Meat", price: 25 },
       { name: "Fish", price: 10 },
       { name: "Salmon", price: 10 },
@@ -54,12 +78,34 @@ export const MENU_SEED: SeedCategory[] = [
     blurb: "Fast, filling, fairly priced.",
     layout: "list",
     items: [
-      { name: "Egg And Sausage Rice", price: 35, desc: "Fried rice, egg, sausage" },
-      { name: "Jollof With Chicken / Fish", price: 40, desc: "Smoky, properly seasoned" },
-      { name: "Fried Rice With Chicken / Fish", price: 40 },
-      { name: "French Fries With Chicken", price: 70, desc: "Loaded, golden, hot" },
-      { name: "Fried Yam: Sausage", price: 35, desc: "Crisp yam, spiced sausage" },
-      { name: "Fried Yam: Chicken", price: 40, desc: "Crisp yam, grilled chicken" },
+      // NOTE: these splits were read off a blurry phone photo — double-check
+      // the real numbers on the printed menu and adjust via Menu Management.
+      {
+        name: "Egg And Sausage Rice",
+        variants: [{ price: 35 }, { price: 50 }],
+        desc: "Fried rice, egg, sausage",
+      },
+      {
+        name: "Jollof With Chicken / Fish",
+        variants: [{ price: 40 }, { price: 70 }],
+        desc: "Smoky, properly seasoned",
+      },
+      { name: "Fried Rice With Chicken / Fish", variants: [{ price: 40 }, { price: 70 }] },
+      {
+        name: "French Fries With Chicken",
+        variants: [{ price: 40 }, { price: 70 }],
+        desc: "Loaded, golden, hot",
+      },
+      {
+        name: "Fried Yam: Sausage",
+        variants: [{ price: 35 }, { price: 60 }],
+        desc: "Crisp yam, spiced sausage",
+      },
+      {
+        name: "Fried Yam: Chicken",
+        variants: [{ price: 40 }, { price: 70 }],
+        desc: "Crisp yam, grilled chicken",
+      },
     ],
   },
   {
@@ -68,10 +114,26 @@ export const MENU_SEED: SeedCategory[] = [
     blurb: "A little of everything, mixed right.",
     layout: "list",
     items: [
-      { name: "Assorted Fried Rice", price: 40, desc: "Meat, chicken, egg, sausage, veg" },
-      { name: "Assorted Jollof Rice", price: 45, desc: "Meat, chicken, egg, sausage, veg" },
-      { name: "Assorted Spaghetti", price: 35, desc: "Meat, chicken, egg, sausage, veg" },
-      { name: "Assorted Noodles", price: 40, desc: "Meat, chicken, egg, sausage, veg" },
+      {
+        name: "Assorted Fried Rice",
+        variants: [{ price: 40 }, { price: 60 }],
+        desc: "Meat, chicken, egg, sausage, veg",
+      },
+      {
+        name: "Assorted Jollof Rice",
+        variants: [{ price: 45 }, { price: 70 }],
+        desc: "Meat, chicken, egg, sausage, veg",
+      },
+      {
+        name: "Assorted Spaghetti",
+        variants: [{ price: 35 }, { price: 50 }],
+        desc: "Meat, chicken, egg, sausage, veg",
+      },
+      {
+        name: "Assorted Noodles",
+        variants: [{ price: 40 }, { price: 60 }],
+        desc: "Meat, chicken, egg, sausage, veg",
+      },
     ],
   },
   {
@@ -80,14 +142,40 @@ export const MENU_SEED: SeedCategory[] = [
     blurb: "Thin crust, generous top.",
     layout: "list",
     items: [
-      { name: "Focus Special Pizza", price: 90, desc: "Chicken, beef, sausage, octopus, shrimps, veg" },
-      { name: "Seafood", price: 90, desc: "Octopus, shrimps, fish" },
-      { name: "All Season", price: 75, desc: "Meat, sausage, chicken, vegetables" },
-      { name: "Chicken", price: 70 },
-      { name: "Beef", price: 70 },
-      { name: "Vegetables", price: 60, desc: "Fresh, garden mix" },
-      { name: "Margherita", price: 60 },
-      { name: "Sausage", price: 60 },
+      {
+        name: "Focus Special Pizza",
+        variants: [{ price: 90 }, { price: 150 }],
+        desc: "Chicken, beef, sausage, octopus, shrimps, veg",
+      },
+      {
+        name: "Seafood",
+        variants: [{ price: 90 }, { price: 140 }],
+        desc: "Octopus, shrimps, fish",
+      },
+      {
+        name: "All Season",
+        variants: [{ price: 75 }, { price: 120 }],
+        desc: "Meat, sausage, chicken, vegetables",
+      },
+      { name: "Chicken", variants: [{ price: 70 }, { price: 110 }] },
+      { name: "Beef", variants: [{ price: 70 }, { price: 110 }] },
+      { name: "Vegetables", variants: [{ price: 60 }, { price: 90 }], desc: "Fresh, garden mix" },
+      { name: "Margherita", variants: [{ price: 60 }, { price: 90 }] },
+      { name: "Sausage", variants: [{ price: 60 }, { price: 90 }] },
+    ],
+  },
+  {
+    slug: "pizza-2-slices",
+    title: "2 Slices Pizza",
+    blurb: "A smaller portion, its own thing — not a size of the whole pizza above.",
+    layout: "grid",
+    items: [
+      { name: "Sausage", price: 30 },
+      { name: "Chicken", price: 35 },
+      { name: "Beef", price: 35 },
+      { name: "All Season", price: 40 },
+      { name: "Seafood", price: 45 },
+      { name: "Focus Special", price: 50 },
     ],
   },
   {
@@ -97,9 +185,9 @@ export const MENU_SEED: SeedCategory[] = [
     layout: "grid",
     items: [
       { name: "Combo", price: 60 },
-      { name: "Meat", price: 55 },
-      { name: "Chicken", price: 50 },
-      { name: "Sausage", price: 40 },
+      { name: "Meat", variants: [{ price: 55 }, { price: 60 }] },
+      { name: "Chicken", variants: [{ price: 50 }, { price: 60 }] },
+      { name: "Sausage", variants: [{ price: 40 }, { price: 60 }] },
     ],
   },
   {
@@ -108,7 +196,13 @@ export const MENU_SEED: SeedCategory[] = [
     blurb: "Ghana classics, done right.",
     layout: "grid",
     items: [
-      { name: "Banku Tilapia", price: 40, desc: "Half or full" },
+      {
+        name: "Banku Tilapia",
+        variants: [
+          { label: "Half", price: 40 },
+          { label: "Full", price: 70 },
+        ],
+      },
       { name: "Banku Fish", price: 30, desc: "Grilled, with shito" },
     ],
   },
@@ -119,14 +213,14 @@ export const MENU_SEED: SeedCategory[] = [
     layout: "triple",
     items: [
       { name: "Cheese", price: 20 },
-      { name: "Chicken", price: 15 },
-      { name: "Fish", price: 20 },
+      { name: "Chicken", variants: [{ price: 15 }, { price: 20 }] },
+      { name: "Fish", variants: [{ price: 20 }, { price: 30 }] },
       { name: "Banku", price: 5 },
       { name: "Rice", price: 20 },
       { name: "Shito", price: 5 },
       { name: "Meat", price: 10 },
       { name: "Sausage", price: 5 },
-      { name: "Egg", price: 5 },
+      { name: "Egg", price: 10 },
     ],
   },
   {

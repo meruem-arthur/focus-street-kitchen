@@ -191,7 +191,11 @@ function OrderTrackingPage() {
             {order.items.map((item, i) => (
               <div key={i} className="flex justify-between text-sm">
                 <span>
-                  {item.name} × {item.quantity}
+                  {item.name}
+                  {item.variantLabel && (
+                    <span className="text-ink/50"> — {item.variantLabel}</span>
+                  )}{" "}
+                  × {item.quantity}
                 </span>
                 <span>{formatGHS(item.subtotal)}</span>
               </div>

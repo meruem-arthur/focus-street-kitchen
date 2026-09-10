@@ -68,6 +68,7 @@ function CheckoutPage() {
           deliveryZoneId: orderType === "delivery" ? (deliveryZoneId as number) : undefined,
           items: cart.lines.map((l) => ({
             menuItemId: l.menuItemId,
+            variantId: l.variantId,
             quantity: l.quantity,
             specialInstructions: l.specialInstructions || undefined,
           })),
@@ -209,9 +210,15 @@ function CheckoutPage() {
             </h2>
             <div className="space-y-2 rounded-2xl bg-card p-4 ring-1 ring-black/5">
               {cart.lines.map((l) => (
-                <div key={l.menuItemId} className="flex justify-between text-sm">
+                <div
+                  key={`${l.menuItemId}-${l.variantId ?? "base"}`}
+                  className="flex justify-between text-sm"
+                >
                   <span>
-                    {l.name} × {l.quantity}
+                    {l.name}
+                    {l.variantLabel && (
+                      <span className="text-ink/50"> — {l.variantLabel}</span>
+                    )} × {l.quantity}
                   </span>
                   <span>{formatGHS(l.price * l.quantity)}</span>
                 </div>

@@ -6,7 +6,14 @@ import "dotenv/config";
 import bcrypt from "bcryptjs";
 import { eq, and } from "drizzle-orm";
 import { db } from "./client.ts";
-import { categories, menuItems, settings, staff, deliveryZones } from "./schema.ts";
+import {
+  categories,
+  menuItems,
+  menuItemVariants,
+  settings,
+  staff,
+  deliveryZones,
+} from "./schema.ts";
 import { MENU_SEED } from "../data/menu-seed.ts";
 
 async function seedMenu() {
@@ -51,25 +58,46 @@ async function seedMenu() {
         where: and(eq(menuItems.categoryId, categoryId), eq(menuItems.name, item.name)),
       });
 
+      const itemId = existingItem
+        ? existingItem.id
+        : (
+            await db
+              .insert(menuItems)
+              .values({
+                categoryId,
+                name: item.name,
+                description: item.desc ?? null,
+                price: item.price !== undefined ? item.price.toFixed(2) : null,
+                available: true,
+                sortOrder: j,
+              })
+              .returning({ id: menuItems.id })
+          )[0].id;
+
       if (existingItem) {
         await db
           .update(menuItems)
           .set({
             description: item.desc ?? null,
-            price: item.price.toFixed(2),
+            price: item.price !== undefined ? item.price.toFixed(2) : null,
             sortOrder: j,
             updatedAt: new Date(),
           })
-          .where(eq(menuItems.id, existingItem.id));
-      } else {
-        await db.insert(menuItems).values({
-          categoryId,
-          name: item.name,
-          description: item.desc ?? null,
-          price: item.price.toFixed(2),
-          available: true,
-          sortOrder: j,
-        });
+          .where(eq(menuItems.id, itemId));
+      }
+
+      // Variants are always fully replaced from the seed data, same as
+      // the rest of the row — keeps re-seeding idempotent.
+      await db.delete(menuItemVariants).where(eq(menuItemVariants.menuItemId, itemId));
+      if (item.variants) {
+        await db.insert(menuItemVariants).values(
+          item.variants.map((v, i) => ({
+            menuItemId: itemId,
+            label: v.label ?? null,
+            price: v.price.toFixed(2),
+            sortOrder: i,
+          })),
+        );
       }
     }
 

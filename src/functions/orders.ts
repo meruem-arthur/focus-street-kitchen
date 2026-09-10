@@ -25,6 +25,7 @@ const OPERATIONAL_ROLES = ["admin", "staff"] as const;
 
 const cartItemSchema = z.object({
   menuItemId: z.number(),
+  variantId: z.number().optional(),
   quantity: z.number().int().min(1).max(50),
   specialInstructions: z.string().max(300).optional(),
 });
@@ -75,12 +76,15 @@ export const createOrder = createServerFn({ method: "POST" })
     const ids = [...new Set(data.items.map((i) => i.menuItemId))];
     const dbItems = await db.query.menuItems.findMany({
       where: (fields, { inArray }) => inArray(fields.id, ids),
+      with: { variants: true },
     });
     const byId = new Map(dbItems.map((i) => [i.id, i]));
 
     let subtotal = 0;
     const lineItems: {
       menuItemId: number;
+      variantId: number | null;
+      variantLabel: string | null;
       itemName: string;
       unitPrice: string;
       quantity: number;
@@ -98,12 +102,36 @@ export const createOrder = createServerFn({ method: "POST" })
           `"${item.name}" is currently unavailable — please remove it from your cart.`,
         );
       }
-      const unitPrice = Number(item.price);
+
+      let unitPrice: number;
+      let variantId: number | null = null;
+      let variantLabel: string | null = null;
+
+      if (item.variants.length > 0) {
+        const variant = item.variants.find((v) => v.id === cartLine.variantId);
+        if (!variant) {
+          throw new Error(`Please choose a price option for "${item.name}".`);
+        }
+        unitPrice = Number(variant.price);
+        variantId = variant.id;
+        variantLabel = variant.label?.trim() || `GH₵${unitPrice.toFixed(2)}`;
+      } else {
+        if (item.price === null) {
+          // Data integrity issue (item has neither a price nor variants) —
+          // should never happen given saveMenuItem's validation, but never
+          // silently charge GH₵0 if it somehow does.
+          throw new Error(`"${item.name}" doesn't have a price set — please contact us.`);
+        }
+        unitPrice = Number(item.price);
+      }
+
       const lineSubtotal = unitPrice * cartLine.quantity;
       subtotal += lineSubtotal;
 
       lineItems.push({
         menuItemId: item.id,
+        variantId,
+        variantLabel,
         itemName: item.name,
         unitPrice: unitPrice.toFixed(2),
         quantity: cartLine.quantity,
@@ -191,6 +219,7 @@ export const getOrderByToken = createServerFn({ method: "GET" })
       createdAt: order.createdAt,
       items: order.items.map((i) => ({
         name: i.itemName,
+        variantLabel: i.variantLabel,
         quantity: i.quantity,
         unitPrice: Number(i.unitPrice),
         subtotal: Number(i.subtotal),

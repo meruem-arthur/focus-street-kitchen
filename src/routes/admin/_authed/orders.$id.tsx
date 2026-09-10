@@ -132,7 +132,11 @@ function OrderDetailPage() {
             {order.items.map((item) => (
               <div key={item.id} className="flex justify-between text-sm">
                 <span>
-                  {item.itemName} × {item.quantity}
+                  {item.itemName}
+                  {item.variantLabel && (
+                    <span className="text-ink/50"> — {item.variantLabel}</span>
+                  )}{" "}
+                  × {item.quantity}
                   {item.specialInstructions && (
                     <span className="block text-xs text-ink/45">
                       Note: {item.specialInstructions}
