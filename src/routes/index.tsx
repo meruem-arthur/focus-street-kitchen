@@ -10,6 +10,7 @@ import { getActivePromotions } from "@/functions/promotions";
 import { useCart } from "@/lib/cart-context";
 import { CartSheet } from "@/components/cart-sheet";
 import { getOpenStatus } from "@/lib/hours";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -41,9 +42,30 @@ function formatGHS(amount: number) {
   return `GH₵${amount.toFixed(2)}`;
 }
 
+// Items either have a single `price`, or price options via `variants`
+// (e.g. Loaded Fries GH₵70/100) — never both. This resolves either shape
+// down to a single number for sorting/"from" display purposes.
+function effectivePrice(item: PublicMenuItem): number | null {
+  if (item.price !== null) return item.price;
+  if (item.variants.length === 0) return null;
+  return Math.min(...item.variants.map((v) => v.price));
+}
+
+// Display string for an item's price — a plain amount for single-price
+// items, or a "from GH₵X" range for items sold with price options.
+function formatItemPrice(item: PublicMenuItem): string {
+  if (item.price !== null) return formatGHS(item.price);
+  if (item.variants.length === 0) return "";
+  const prices = item.variants.map((v) => v.price);
+  const min = Math.min(...prices);
+  const max = Math.max(...prices);
+  return min === max ? formatGHS(min) : `${formatGHS(min)} – ${formatGHS(max)}`;
+}
+
 function categoryFrom(cat: PublicCategory): number | null {
-  if (cat.items.length === 0) return null;
-  return Math.min(...cat.items.map((i) => i.price));
+  const prices = cat.items.map(effectivePrice).filter((p): p is number => p !== null);
+  if (prices.length === 0) return null;
+  return Math.min(...prices);
 }
 
 // Each dish can have its own photo via `image`. To add real photos:
@@ -228,6 +250,10 @@ function StarRow({ rating }: { rating: number }) {
 }
 
 function AddToCartControl({ item }: { item: PublicMenuItem }) {
+  if (item.variants.length > 0) {
+    return <VariantAddToCartControl item={item} />;
+  }
+
   const cart = useCart();
   const line = cart.lines.find((l) => l.menuItemId === item.id);
 
@@ -239,7 +265,7 @@ function AddToCartControl({ item }: { item: PublicMenuItem }) {
     return (
       <button
         type="button"
-        onClick={() => cart.addItem({ menuItemId: item.id, name: item.name, price: item.price })}
+        onClick={() => cart.addItem({ menuItemId: item.id, name: item.name, price: item.price! })}
         className="btn-glass-light shrink-0 rounded-full bg-clay/10 px-3 py-1.5 text-xs font-semibold text-clay transition-colors hover:bg-clay/15"
       >
         Add
@@ -267,6 +293,106 @@ function AddToCartControl({ item }: { item: PublicMenuItem }) {
         +
       </button>
     </div>
+  );
+}
+
+// Items sold with price options (e.g. Loaded Fries GH₵70/100) can't use a
+// single "Add" button — the customer has to pick which option first, and
+// different options for the same dish are kept as separate cart lines (see
+// cart-context's `sameLine`), so more than one option can be in the cart
+// at once. This shows a compact popover listing each option with its own
+// price and its own +/− stepper.
+function VariantAddToCartControl({ item }: { item: PublicMenuItem }) {
+  const cart = useCart();
+  const [open, setOpen] = React.useState(false);
+
+  if (!item.available) {
+    return <span className="shrink-0 text-[11px] font-medium text-ink/35">Unavailable</span>;
+  }
+
+  const totalQty = item.variants.reduce((sum, variant) => {
+    const line = cart.lines.find((l) => l.menuItemId === item.id && l.variantId === variant.id);
+    return sum + (line?.quantity ?? 0);
+  }, 0);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="btn-glass-light shrink-0 rounded-full bg-clay/10 px-3 py-1.5 text-xs font-semibold text-clay transition-colors hover:bg-clay/15"
+        >
+          {totalQty > 0 ? `${totalQty} in cart` : "Choose"}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-56 rounded-2xl p-2">
+        <p className="truncate px-1.5 pt-0.5 pb-1.5 text-[11px] font-medium text-ink/45">
+          {item.name}
+        </p>
+        <div className="space-y-1">
+          {item.variants.map((variant) => {
+            const optionLabel = variant.label ?? formatGHS(variant.price);
+            const line = cart.lines.find(
+              (l) => l.menuItemId === item.id && l.variantId === variant.id,
+            );
+
+            return (
+              <div
+                key={variant.id}
+                className="flex items-center justify-between gap-2 rounded-xl px-1.5 py-1"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-medium">{optionLabel}</p>
+                  {variant.label && (
+                    <p className="text-[11px] text-ink/45">{formatGHS(variant.price)}</p>
+                  )}
+                </div>
+
+                {!line ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      cart.addItem({
+                        menuItemId: item.id,
+                        variantId: variant.id,
+                        variantLabel: optionLabel,
+                        name: item.name,
+                        price: variant.price,
+                      })
+                    }
+                    className="shrink-0 rounded-full bg-clay/10 px-2.5 py-1 text-[11px] font-semibold text-clay hover:bg-clay/15"
+                  >
+                    Add
+                  </button>
+                ) : (
+                  <div className="flex shrink-0 items-center gap-1 rounded-full bg-clay px-1 py-1">
+                    <button
+                      type="button"
+                      onClick={() => cart.updateQuantity(item.id, line.quantity - 1, variant.id)}
+                      className="grid size-5 place-items-center rounded-full text-xs font-semibold text-paper hover:bg-paper/15"
+                      aria-label={`Decrease ${item.name} ${optionLabel} quantity`}
+                    >
+                      −
+                    </button>
+                    <span className="w-4 text-center text-[11px] font-semibold text-paper">
+                      {line.quantity}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => cart.updateQuantity(item.id, line.quantity + 1, variant.id)}
+                      className="grid size-5 place-items-center rounded-full text-xs font-semibold text-paper hover:bg-paper/15"
+                      aria-label={`Increase ${item.name} ${optionLabel} quantity`}
+                    >
+                      +
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -419,7 +545,7 @@ function Index() {
                           {item.description && (
                             <p className="mt-0.5 text-xs text-ink/50">{item.description}</p>
                           )}
-                          <p className="mt-1 text-sm font-semibold">{formatGHS(item.price)}</p>
+                          <p className="mt-1 text-sm font-semibold">{formatItemPrice(item)}</p>
                         </div>
                       </div>
                       <AddToCartControl item={item} />
@@ -447,7 +573,7 @@ function Index() {
                         <p className="mt-0.5 text-xs text-ink/50">{item.description}</p>
                       )}
                       <div className="mt-1.5 flex items-center justify-between gap-2">
-                        <p className="text-sm text-clay">{formatGHS(item.price)}</p>
+                        <p className="text-sm text-clay">{formatItemPrice(item)}</p>
                         <AddToCartControl item={item} />
                       </div>
                     </div>
@@ -463,7 +589,7 @@ function Index() {
                       className="rounded-2xl bg-card px-3 py-3 ring-1 ring-black/5"
                     >
                       <p className="text-xs font-medium">{item.name}</p>
-                      <p className="mt-1 text-xs text-clay">{formatGHS(item.price)}</p>
+                      <p className="mt-1 text-xs text-clay">{formatItemPrice(item)}</p>
                       <div className="mt-1.5">
                         <AddToCartControl item={item} />
                       </div>
