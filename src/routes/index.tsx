@@ -572,8 +572,8 @@ function Index() {
                       {item.description && (
                         <p className="mt-0.5 text-xs text-ink/50">{item.description}</p>
                       )}
-                      <div className="mt-1.5 flex items-center justify-between gap-2">
-                        <p className="text-sm text-clay">{formatItemPrice(item)}</p>
+                      <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5">
+                        <p className="min-w-0 text-sm text-clay">{formatItemPrice(item)}</p>
                         <AddToCartControl item={item} />
                       </div>
                     </div>
